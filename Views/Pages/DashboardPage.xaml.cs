@@ -1,9 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -324,24 +322,6 @@ public partial class DashboardPage : Page
         {
             Logger.Error($"Failed to load cover image with timestamp: {ex.Message}");
             await Dispatcher.InvokeAsync(() => ClearCover(index));
-        }
-    }
-
-    /// <summary>双击歌曲标题时用默认浏览器打开歌曲链接（仅网易云/QQ 音乐提供）。</summary>
-    private void SongTitle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (e.ClickCount != 2) return;
-        var index = Array.IndexOf(_songTitleLabels, sender);
-        if (index < 0 || index >= _lastPlayerInfos.Length) return;
-        var info = _lastPlayerInfos[index];
-        if (info is not { } playerInfo || string.IsNullOrEmpty(playerInfo.Url)) return;
-        try
-        {
-            Process.Start(new ProcessStartInfo(playerInfo.Url) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Logger.Error($"打开歌曲链接失败: {ex.Message}");
         }
     }
 }

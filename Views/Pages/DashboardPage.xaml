@@ -27,9 +27,7 @@
                         <TextBlock x:Name="PlayerName0" Text="网易云音乐" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,5" />
                         <TextBlock x:Name="SongTitle0" Text="暂无播放" FontSize="16" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                                   TextTrimming="CharacterEllipsis" Cursor="Hand"
-                                   MouseLeftButtonDown="SongTitle_MouseLeftButtonDown"
-                                   ToolTip="双击打开歌曲链接" />
+                                   TextTrimming="CharacterEllipsis" />
                         <TextBlock x:Name="Artist0" FontSize="12" Margin="0,4,0,0"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    TextTrimming="CharacterEllipsis" />
@@ -69,9 +67,7 @@
                         <TextBlock x:Name="PlayerName1" Text="QQ音乐" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,5" />
                         <TextBlock x:Name="SongTitle1" Text="暂无播放" FontSize="16" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                                   TextTrimming="CharacterEllipsis" Cursor="Hand"
-                                   MouseLeftButtonDown="SongTitle_MouseLeftButtonDown"
-                                   ToolTip="双击打开歌曲链接" />
+                                   TextTrimming="CharacterEllipsis" />
                         <TextBlock x:Name="Artist1" FontSize="12" Margin="0,4,0,0"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    TextTrimming="CharacterEllipsis" />
@@ -111,9 +107,7 @@
                         <TextBlock x:Name="PlayerName2" Text="汽水音乐" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,5" />
                         <TextBlock x:Name="SongTitle2" Text="暂无播放" FontSize="16" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                                   TextTrimming="CharacterEllipsis" Cursor="Hand"
-                                   MouseLeftButtonDown="SongTitle_MouseLeftButtonDown"
-                                   ToolTip="双击打开歌曲链接" />
+                                   TextTrimming="CharacterEllipsis" />
                         <TextBlock x:Name="Artist2" FontSize="12" Margin="0,4,0,0"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    TextTrimming="CharacterEllipsis" />
