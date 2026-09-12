@@ -27,6 +27,9 @@
                 <ui:NavigationViewItem Content="播放器" Icon="{ui:SymbolIcon MusicNote124}"
                                        TargetPageType="{x:Type pages:PlayersPage}"
                                        NavigationCacheMode="Required" />
+                <ui:NavigationViewItem Content="挂时长" Icon="{ui:SymbolIcon Games24}"
+                                       TargetPageType="{x:Type pages:GameIdlePage}"
+                                       NavigationCacheMode="Required" />
                 <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}"
                                        TargetPageType="{x:Type pages:SettingsPage}"
                                        NavigationCacheMode="Required" />

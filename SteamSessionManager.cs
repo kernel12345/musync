@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MuSync.Utils;
@@ -19,18 +22,31 @@ internal class SteamSessionManager : IDisposable
     private CallbackManager? _callbackManager;
     private SteamUser? _steamUser;
     private SteamFriends? _steamFriends;
+    private SteamApps? _steamApps;
     private readonly CancellationTokenSource _cts = new();
     private Task? _callbackTask;
     private bool _isRunning;
     private string _currentGameName = string.Empty;
+    /// <summary>挂时长的真实 AppID 列表（并发上限 30）。</summary>
+    private readonly List<uint> _idleAppIds = new();
+    /// <summary>去重：上一次实际发送的 games_played 内容签名，断线后置空强制重发。</summary>
+    private string? _lastPlayedSignature;
+    private readonly object _gamesPlayedLock = new();
     private SteamID? _selfSteamId;
     private readonly ManualResetEventSlim _connectedEvent = new(false);
     private volatile bool _reconnectLoopRunning;
     private volatile bool _reconnectPending;
+    private TaskCompletionSource<IReadOnlyList<uint>>? _licensesTcs;
 
     public bool IsConnected => _steamClient?.IsConnected ?? false;
     public bool IsLoggedOn { get; private set; }
     public bool IsRealGameActive { get; private set; }
+    /// <summary>是否正在挂游戏时长。</summary>
+    public bool IsIdling { get { lock (_gamesPlayedLock) return _idleAppIds.Count > 0; } }
+    /// <summary>当前挂时长的 AppID 快照。</summary>
+    public IReadOnlyList<uint> IdleAppIds { get { lock (_gamesPlayedLock) return _idleAppIds.ToList(); } }
+    /// <summary>Steam 并发「正在玩」条目上限。</summary>
+    public const int MaxIdleGames = 30;
     /// <summary>密码登录成功后是否保存 refresh token（用于下次自动登录）；不保存则每次启动需手动登录。</summary>
     public bool RememberSession { get; set; } = true;
     public string? Username { get; private set; }
@@ -46,11 +62,22 @@ internal class SteamSessionManager : IDisposable
         _callbackManager = new CallbackManager(_steamClient);
         _steamUser = _steamClient.GetHandler<SteamUser>()!;
         _steamFriends = _steamClient.GetHandler<SteamFriends>()!;
+        _steamApps = _steamClient.GetHandler<SteamApps>()!;
         _callbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
         _callbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
         _callbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
         _callbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
         _callbackManager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
+        _callbackManager.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
+        // 恢复上次退出时的挂时长选择，登录成功后自动重发
+        var savedIdle = Configurations.Instance.Settings;
+        if (savedIdle.GameIdleEnabled)
+        {
+            lock (_gamesPlayedLock)
+            {
+                _idleAppIds.AddRange(savedIdle.GameIdleAppIds.Take(MaxIdleGames));
+            }
+        }
         _callbackTask = Task.Run(() => CallbackLoop(_cts.Token));
         _steamClient.Connect();
         Debug.WriteLine("[SteamSession] 正在连接到 Steam...");
@@ -91,6 +118,7 @@ internal class SteamSessionManager : IDisposable
     {
         IsLoggedOn = false;
         _connectedEvent.Reset();
+        lock (_gamesPlayedLock) _lastPlayedSignature = null;
         Debug.WriteLine($"[SteamSession] 已断开连接 (UserInitiated={cb.UserInitiated})");
         Logger.Info($"[SteamSession] 已断开连接 (UserInitiated={cb.UserInitiated})");
         if (cb.UserInitiated || !_isRunning || _reconnectLoopRunning) return;
@@ -198,6 +226,9 @@ internal class SteamSessionManager : IDisposable
             Logger.Info($"[SteamSession] 登录成功! SteamID: {cb.ClientSteamID}");
             _steamFriends?.SetPersonaState(EPersonaState.Online);
             Debug.WriteLine("[SteamSession] 已设置在线状态");
+            // 新会话需要重新声明 games_played：恢复挂时长（音乐状态由 RpcManager 随后强制重推）
+            lock (_gamesPlayedLock) _lastPlayedSignature = null;
+            SendGamesPlayed();
         }
         else
         {
@@ -350,11 +381,54 @@ internal class SteamSessionManager : IDisposable
 
     public Task SetGameNameAsync(string gameName)
     {
-        if (!IsLoggedOn || _steamClient == null) return Task.CompletedTask;
-        if (gameName == _currentGameName) return Task.CompletedTask;
-        Debug.WriteLine($"[SteamSession] 正在设置游戏名称: '{gameName}'");
-        if (!string.IsNullOrEmpty(gameName))
+        if (!IsLoggedOn || _steamClient == null)
         {
+            _currentGameName = gameName ?? string.Empty;
+            return Task.CompletedTask;
+        }
+        _currentGameName = gameName ?? string.Empty;
+        SendGamesPlayed();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 设置挂时长的真实游戏 AppID（最多 <see cref="MaxIdleGames"/> 个），并持久化以便登录后自动恢复。
+    /// 音乐状态文本不受影响：音乐条目始终位于 games_played 首位，真实 appid 紧随其后。
+    /// </summary>
+    public Task SetIdleGamesAsync(IReadOnlyCollection<uint> appIds)
+    {
+        var distinct = appIds.Where(id => id > 0).Distinct().Take(MaxIdleGames).ToList();
+        lock (_gamesPlayedLock)
+        {
+            _idleAppIds.Clear();
+            _idleAppIds.AddRange(distinct);
+        }
+        var settings = Configurations.Instance.Settings;
+        settings.GameIdleEnabled = distinct.Count > 0;
+        settings.GameIdleAppIds = distinct;
+        Configurations.Instance.Save();
+        Logger.Info($"[SteamSession] 挂时长游戏已更新: {(distinct.Count > 0 ? string.Join(", ", distinct) : "（已停止）")}");
+        if (IsLoggedOn) SendGamesPlayed();
+        return Task.CompletedTask;
+    }
+
+    public void ClearGameName()
+    {
+        _currentGameName = string.Empty;
+        if (IsLoggedOn) SendGamesPlayed();
+    }
+
+    /// <summary>
+    /// 统一发送 ClientGamesPlayed：音乐条目（Shortcut + game_extra_info）排首位，
+    /// 之后追加挂时长真实 appid。两者皆空时发送空列表清除状态。
+    /// </summary>
+    private void SendGamesPlayed()
+    {
+        if (!IsLoggedOn || _steamClient == null) return;
+        lock (_gamesPlayedLock)
+        {
+            var signature = BuildPlayedSignature(_currentGameName, _idleAppIds);
+            if (signature == _lastPlayedSignature) return;
             var request = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayedWithDataBlob)
             {
                 Body =
@@ -362,35 +436,39 @@ internal class SteamSessionManager : IDisposable
                     client_os_type = unchecked((uint)EOSType.Windows10)
                 }
             };
-            request.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
+            if (!string.IsNullOrEmpty(_currentGameName))
             {
-                game_extra_info = gameName,
-                game_id = new GameID
+                request.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
                 {
-                    AppType = GameID.GameType.Shortcut,
-                    ModID = uint.MaxValue
-                }
-            });
+                    game_extra_info = _currentGameName,
+                    game_id = new GameID
+                    {
+                        AppType = GameID.GameType.Shortcut,
+                        ModID = uint.MaxValue
+                    }
+                });
+            }
+            foreach (var appId in _idleAppIds)
+            {
+                request.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
+                {
+                    game_id = new GameID(appId)
+                });
+            }
             _steamClient.Send(request);
-            Debug.WriteLine($"[SteamSession] CMsgClientGamesPlayed 已发送: '{gameName}'");
+            _lastPlayedSignature = signature;
+            Debug.WriteLine($"[SteamSession] games_played 已发送 (音乐文本: '{_currentGameName}', 挂时长 {_idleAppIds.Count} 个)");
         }
-        _currentGameName = gameName;
-        return Task.CompletedTask;
     }
 
-    public void ClearGameName()
+    private static string BuildPlayedSignature(string gameName, IEnumerable<uint> idleAppIds)
     {
-        if (!IsLoggedOn || _steamClient == null) return;
-        var request = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayedWithDataBlob)
+        var sb = new StringBuilder(gameName ?? string.Empty);
+        foreach (var id in idleAppIds.OrderBy(x => x))
         {
-            Body =
-            {
-                client_os_type = unchecked((uint)EOSType.Windows10)
-            }
-        };
-        _steamClient.Send(request);
-        _currentGameName = string.Empty;
-        Debug.WriteLine("[SteamSession] 游戏名称已清除");
+            sb.Append('|').Append(id);
+        }
+        return sb.ToString();
     }
 
     public void SubmitSteamGuardCode(string code)
@@ -409,11 +487,54 @@ internal class SteamSessionManager : IDisposable
             : "[SteamSession] 真实游戏已结束，恢复音乐同步");
     }
 
-    private static bool IsRealGameState(SteamFriends.PersonaStateCallback cb)
+    private bool IsRealGameState(SteamFriends.PersonaStateCallback cb)
     {
         if (cb.GameID is not { } gameId || gameId.AppID == 0) return false;
-        return gameId.AppType is GameID.GameType.App or GameID.GameType.GameMod;
+        if (gameId.AppType is not (GameID.GameType.App or GameID.GameType.GameMod)) return false;
+        // 自己挂时长的 appid 会被 Steam 回报为「正在玩」，不算外部真实游戏
+        lock (_gamesPlayedLock)
+        {
+            if (_idleAppIds.Contains(gameId.AppID)) return false;
+        }
+        return true;
     }
+
+    private void OnLicenseList(SteamApps.LicenseListCallback cb)
+    {
+        var packageIds = cb.LicenseList
+            .Select(l => l.PackageID)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+        Debug.WriteLine($"[SteamSession] 收到许可证列表: {packageIds.Count} 个套餐");
+        var tcs = _licensesTcs;
+        if (tcs == null)
+        {
+            tcs = new TaskCompletionSource<IReadOnlyList<uint>>(TaskCreationOptions.RunContinuationsAsynchronously);
+            tcs = Interlocked.CompareExchange(ref _licensesTcs, tcs, null) ?? tcs;
+        }
+        tcs.TrySetResult(packageIds);
+    }
+
+    /// <summary>等待登录后 Steam 下发的许可证套餐列表（库存解析用）。</summary>
+    public async Task<IReadOnlyList<uint>> WaitForLicensesAsync(CancellationToken cancellationToken = default)
+    {
+        var tcs = _licensesTcs;
+        if (tcs == null)
+        {
+            tcs = new TaskCompletionSource<IReadOnlyList<uint>>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var existing = Interlocked.CompareExchange(ref _licensesTcs, tcs, null);
+            if (existing != null) tcs = existing;
+        }
+        if (!IsLoggedOn) return Array.Empty<uint>();
+        using (cancellationToken.Register(static state =>
+                   ((TaskCompletionSource<IReadOnlyList<uint>>)state!).TrySetCanceled(), tcs))
+        {
+            return await tcs.Task.ConfigureAwait(false);
+        }
+    }
+
+    internal SteamApps? SteamAppsHandler => _steamApps;
 
     private void CallbackLoop(CancellationToken token)
     {
@@ -452,6 +573,13 @@ internal class SteamSessionManager : IDisposable
         _cts.Cancel();
         if (IsLoggedOn)
         {
+            // 退出时清空整个 games_played（音乐文本 + 挂时长），避免账号卡在「正在玩」
+            lock (_gamesPlayedLock)
+            {
+                _idleAppIds.Clear();
+                _currentGameName = string.Empty;
+                _lastPlayedSignature = null;
+            }
             ClearGameName();
             _steamUser?.LogOff();
         }

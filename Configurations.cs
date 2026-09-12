@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -24,6 +25,10 @@ internal class ConfigData
     /// <summary>没有音乐可同步时，是否在 Steam 状态位显示自定义在线签名。</summary>
     public bool EnableCustomSignature { get; set; }
     public string CustomSignature { get; set; } = "";
+    /// <summary>挂游戏时长：当前是否处于挂时长状态（登录后自动恢复）。</summary>
+    public bool GameIdleEnabled { get; set; }
+    /// <summary>挂游戏时长：正在挂的 Steam AppID 列表（最多 30 个，Steam 并发游玩上限）。</summary>
+    public List<uint> GameIdleAppIds { get; set; } = new();
 }
 public enum SteamStatusPriority
 {

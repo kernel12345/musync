@@ -12,8 +12,9 @@
   - 汽水音乐通过 Windows 系统媒体会话（SMTC）读取，无需任何特殊设置
 - 🎨 **Windows 11 Fluent 界面**：WPF + [WPF-UI](https://github.com/lepoco/wpfui)
   - Mica 云母背景，深浅色自动跟随系统
-  - 左侧 NavigationView 三页导航：主界面 / 播放器 / 设置
+  - 左侧 NavigationView 四页导航：主界面 / 播放器 / 挂时长 / 设置
   - 主界面三张播放器卡片（封面、歌名、歌手、专辑、实时进度条），双击歌名打开歌曲页
+  - 「挂时长」页读取 Steam 库存，勾选游戏即可累计游玩时长（最多 30 个，也适用集换式卡牌掉落），音乐推送不中断
   - 设置页为 Win11 设置风格的圆角卡片 + ToggleSwitch，改动实时预览
 - 📡 **Steam 同步**：SteamKit2 直连，无需 Steam 客户端在线
   - 断线自动重连 + 令牌自动重新登录（指数退避）
@@ -55,12 +56,13 @@ GitHub Actions（`main` 分支 push/PR）会自动构建、测试并上传单文
 
 ```
 App.xaml / MainWindow.xaml     # WPF 启动与 Fluent 主窗口（Mica + NavigationView）
-Views/Pages/                   # 三个导航页：Dashboard / Players / Settings
+Views/Pages/                   # 导航页：Dashboard / Players / GameIdle / Settings
 Themes/SettingsCardStyle.xaml  # Win11 风格设置卡片样式
 Services/                      # AppServices / TrayIconService
 RpcManager.cs                  # 多播放器轮询与活跃源仲裁
 SteamStatusManager.cs          # SteamKit2 连接、登录与状态推送
-SteamSessionManager.cs         # 会话/令牌（DPAPI 加密）持久化
+SteamSessionManager.cs         # 会话/令牌（DPAPI 加密）持久化、games_played 统一发送
+SteamLibraryResolver.cs        # LicenseList + PICS 库存游戏解析（本地缓存）
 Players/                       # 网易云 / QQ 音乐（内存读取）、汽水音乐（SMTC）
 Utils/ImageCacheManager.cs     # 封面缓存（IO 与解码走后台线程）
 tests/MuSync.Tests/            # xUnit 单元测试
