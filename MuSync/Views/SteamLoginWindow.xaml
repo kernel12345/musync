@@ -1,0 +1,43 @@
+<ui:FluentWindow x:Class="MuSync.SteamLoginWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Steam 登录" Width="400" Height="360"
+                 ResizeMode="NoResize" ShowInTaskbar="False"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
+    <Grid Margin="28,40,28,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="登录 Steam" FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,16" />
+
+        <ui:TextBox x:Name="UsernameBox" Grid.Row="1" Margin="0,0,0,12"
+                    PlaceholderText="Steam 账号" MaxLength="128" />
+        <ui:PasswordBox x:Name="PasswordBox" Grid.Row="2" Margin="0,0,0,12"
+                        PlaceholderText="密码" MaxLength="128" />
+        <CheckBox x:Name="RememberCheckBox" Grid.Row="3" Content="记住我（下次自动登录）" IsChecked="True" />
+
+        <TextBlock x:Name="StatusText" Grid.Row="5" TextWrapping="Wrap" Margin="0,0,0,12"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ui:Button x:Name="CancelButton" Content="取消" IsCancel="True" Width="96" Margin="0,0,10,0" />
+            <ui:Button x:Name="LoginButton" Grid.Column="2" Content="登录" Appearance="Primary"
+                       IsDefault="True" Width="96" Click="LoginButton_Click" />
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

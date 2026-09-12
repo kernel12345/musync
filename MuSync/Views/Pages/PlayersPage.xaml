@@ -1,0 +1,198 @@
+<Page x:Class="MuSync.PlayersPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Background="Transparent">
+    <StackPanel MaxWidth="760" Margin="12,8,12,20">
+
+            <TextBlock Text="播放器" Style="{StaticResource SettingsSectionHeader}" />
+
+            <!-- ============ 播放器 0：网易云音乐 ============ -->
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="MusicNote124" Style="{StaticResource SettingsCardIcon}"
+                                   VerticalAlignment="Top" Margin="0,2,14,0" />
+                    <StackPanel Grid.Column="1">
+                        <Grid>
+                            <TextBlock Text="网易云音乐" Style="{StaticResource SettingsCardTitle}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="P0Active" Text="未运行" HorizontalAlignment="Right" FontSize="12"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                        <TextBlock x:Name="P0State" Style="{StaticResource SettingsCardDescription}" Margin="0,3,0,0" Text="无轮询错误" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="72" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="当前歌曲" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P0Song" Grid.Column="1" FontSize="12" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="歌手" Grid.Row="1" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P0Artist" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="8,4,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="专辑" Grid.Row="2" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P0Album" Grid.Row="2" Grid.Column="1" FontSize="12" Margin="8,4,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="进度" Grid.Row="3" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P0Progress" Grid.Row="3" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ============ 播放器 1：QQ音乐 ============ -->
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="MusicNote124" Style="{StaticResource SettingsCardIcon}"
+                                   VerticalAlignment="Top" Margin="0,2,14,0" />
+                    <StackPanel Grid.Column="1">
+                        <Grid>
+                            <TextBlock Text="QQ音乐" Style="{StaticResource SettingsCardTitle}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="P1Active" Text="未运行" HorizontalAlignment="Right" FontSize="12"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                        <TextBlock x:Name="P1State" Style="{StaticResource SettingsCardDescription}" Margin="0,3,0,0" Text="无轮询错误" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="72" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="当前歌曲" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P1Song" Grid.Column="1" FontSize="12" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="歌手" Grid.Row="1" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P1Artist" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="8,4,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="专辑" Grid.Row="2" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P1Album" Grid.Row="2" Grid.Column="1" FontSize="12" Margin="8,4,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="进度" Grid.Row="3" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P1Progress" Grid.Row="3" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ============ 播放器 2：汽水音乐 ============ -->
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="MusicNote124" Style="{StaticResource SettingsCardIcon}"
+                                   VerticalAlignment="Top" Margin="0,2,14,0" />
+                    <StackPanel Grid.Column="1">
+                        <Grid>
+                            <TextBlock Text="汽水音乐" Style="{StaticResource SettingsCardTitle}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="P2Active" Text="未运行" HorizontalAlignment="Right" FontSize="12"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+                        <TextBlock x:Name="P2State" Style="{StaticResource SettingsCardDescription}" Margin="0,3,0,0" Text="无轮询错误" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="72" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="当前歌曲" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P2Song" Grid.Column="1" FontSize="12" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="歌手" Grid.Row="1" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P2Artist" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="8,4,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="专辑" Grid.Row="2" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P2Album" Grid.Row="2" Grid.Column="1" FontSize="12" Margin="8,4,0,0" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="进度" Grid.Row="3" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="P2Progress" Grid.Row="3" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ============ Steam 会话 ============ -->
+            <Border Style="{StaticResource SettingsCard}" Margin="0,4,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="Person24" Style="{StaticResource SettingsCardIcon}"
+                                   VerticalAlignment="Top" Margin="0,2,14,0" />
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Steam 会话" Style="{StaticResource SettingsCardTitle}" FontWeight="SemiBold" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="72" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="连接" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SConn" Grid.Column="1" FontSize="12" Margin="8,0,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="登录" Grid.Row="1" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SLogon" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="真实游戏" Grid.Row="2" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SRealGame" Grid.Row="2" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="手动暂停" Grid.Row="3" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SManualPause" Grid.Row="3" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Margin="4,2,4,0" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                       Text="同一时刻只有一个“正在播放（未暂停）”的播放器拥有 Steam 状态发言权；暂停中的播放器只刷新本地界面，Steam 状态让位给空闲签名。" />
+
+        </StackPanel>
+</Page>

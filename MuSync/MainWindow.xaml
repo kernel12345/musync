@@ -1,0 +1,36 @@
+<ui:FluentWindow x:Class="MuSync.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:pages="clr-namespace:MuSync"
+                 Title="MuSync" Width="920" Height="640"
+                 MinWidth="720" MinHeight="520"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica"
+                 Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown"
+                 Loaded="Window_Loaded">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Title="MuSync" Grid.Row="0" />
+
+        <ui:NavigationView x:Name="RootNavigation" Grid.Row="1"
+                           PaneDisplayMode="Left" IsBackButtonVisible="Collapsed"
+                           OpenPaneLength="180">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="主界面" Icon="{ui:SymbolIcon Home24}"
+                                       TargetPageType="{x:Type pages:DashboardPage}"
+                                       NavigationCacheMode="Required" />
+                <ui:NavigationViewItem Content="播放器" Icon="{ui:SymbolIcon MusicNote124}"
+                                       TargetPageType="{x:Type pages:PlayersPage}"
+                                       NavigationCacheMode="Required" />
+                <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}"
+                                       TargetPageType="{x:Type pages:SettingsPage}"
+                                       NavigationCacheMode="Required" />
+            </ui:NavigationView.MenuItems>
+        </ui:NavigationView>
+    </Grid>
+</ui:FluentWindow>
