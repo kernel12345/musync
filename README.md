@@ -27,7 +27,7 @@
 
 ## 📥 使用
 
-1. 下载 [Releases](https://github.com/kernel12345/musync/releases) 中的单文件 `MuSync.exe`（CI 产物为 framework-dependent，需先安装 [.NET 9 桌面运行时](https://dotnet.microsoft.com/download/dotnet/9.0)）
+1. 下载 [Releases](https://github.com/kernel12345/musync/releases) 中的单文件 `MuSync.exe`（自包含 .NET 运行时，Windows x64 可直接运行）
 2. 运行后首次启动会弹出 Steam 登录（支持手机令牌 / 邮箱验证码，登录后自动保存会话）
 3. 打开音乐播放器即可自动同步
 
