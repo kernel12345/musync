@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 namespace MuSync.Win32Api;
 internal static partial class User32
@@ -68,5 +69,37 @@ internal static partial class User32
         text = title;
         pid = processId;
         return !string.IsNullOrEmpty(title) && pid > 0;
+    }
+
+    /// <summary>
+    /// 读取鼠标当前操作的（前台窗口所属）应用名：优先取文件描述/产品名，失败时回退到进程名。
+    /// 排除 MuSync 自身；前台无有效窗口时返回 null。
+    /// </summary>
+    public static string? GetForegroundAppName()
+    {
+        var hwnd = GetForegroundWindow();
+        if (hwnd == IntPtr.Zero) return null;
+        if (GetWindowThreadProcessId(hwnd, out var pid) == 0 || pid == 0) return null;
+        if (pid == Environment.ProcessId) return null;
+        try
+        {
+            using var process = Process.GetProcessById(pid);
+            var processName = process.ProcessName;
+            try
+            {
+                var info = process.MainModule?.FileVersionInfo;
+                if (!string.IsNullOrWhiteSpace(info?.FileDescription)) return info!.FileDescription;
+                if (!string.IsNullOrWhiteSpace(info?.ProductName)) return info!.ProductName;
+            }
+            catch
+            {
+                // 系统/受保护进程无法读取模块信息时，回退到进程名
+            }
+            return string.IsNullOrEmpty(processName) ? null : processName;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

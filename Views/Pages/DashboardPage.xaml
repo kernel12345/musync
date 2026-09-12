@@ -140,5 +140,23 @@
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
             </Grid>
 
+            <!-- ============ 性能监控 ============ -->
+            <TextBlock Text="性能监控" Style="{StaticResource SettingsSectionHeader}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="ArrowClockwise24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                    <TextBlock x:Name="MemoryInfoText" Grid.Column="1" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="每 2 秒自动刷新" VerticalAlignment="Center" />
+                    <ui:Button x:Name="RefreshMemoryButton" Grid.Column="2" Content="立即刷新" VerticalAlignment="Center"
+                               Click="RefreshMemoryButton_Click" />
+                </Grid>
+            </Border>
+
         </StackPanel>
 </Page>

@@ -3,9 +3,18 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Background="Transparent">
-    <StackPanel MaxWidth="760" Margin="12,8,12,20">
+    <DockPanel>
 
-            <TextBlock Text="设置" Style="{StaticResource SettingsSectionHeader}" Margin="0,8,0,0" />
+        <!-- ==================== 顶部栏：标题居左，账户操作居右 ==================== -->
+        <Grid DockPanel.Dock="Top" Margin="12,14,12,8">
+            <TextBlock Text="设置" Style="{StaticResource SettingsSectionHeader}" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <ui:Button x:Name="LogoutButton" Content="退出登录" Margin="0,0,10,0" Click="LogoutButton_Click" />
+                <ui:Button x:Name="LoginButton" Content="重新登录" Click="LoginButton_Click" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel MaxWidth="760" Margin="12,0,12,20">
 
             <!-- ==================== 程序设置 ==================== -->
             <TextBlock Text="程序设置" Style="{StaticResource SettingsSectionHeader}" />
@@ -128,6 +137,22 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Symbol="Cursor24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="推送实时操作" Style="{StaticResource SettingsCardTitle}" />
+                            <TextBlock Text="未播放音乐时，把鼠标当前操作的应用名同步到 Steam 状态" Style="{StaticResource SettingsCardDescription}" />
+                        </StackPanel>
+                        <ui:ToggleSwitch x:Name="PushRealtimeActivityToggle" Grid.Column="2" VerticalAlignment="Center"
+                                         Checked="Setting_Changed" Unchecked="Setting_Changed" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Symbol="Person24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="显示歌手名称" Style="{StaticResource SettingsCardTitle}" />
@@ -209,40 +234,6 @@
                 </Grid>
             </Border>
 
-            <!-- ==================== 性能监控 ==================== -->
-            <TextBlock Text="性能监控" Style="{StaticResource SettingsSectionHeader}" />
-            <Border Style="{StaticResource SettingsCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="ArrowClockwise24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
-                    <TextBlock x:Name="MemoryInfoText" Grid.Column="1" FontSize="12" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                               Text="每 2 秒自动刷新" VerticalAlignment="Center" />
-                    <ui:Button x:Name="RefreshMemoryButton" Grid.Column="2" Content="立即刷新" VerticalAlignment="Center"
-                               Click="RefreshMemoryButton_Click" />
-                </Grid>
-            </Border>
-
-            <!-- ==================== 底部操作 ==================== -->
-            <Grid Margin="0,20,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <ui:Button x:Name="LogoutButton" Content="退出登录" Margin="0,0,10,0" Click="LogoutButton_Click" />
-                <ui:Button x:Name="LoginButton" Grid.Column="1" Content="重新登录" Click="LoginButton_Click" />
-                <ui:Button x:Name="CancelButton" Grid.Column="3" Content="取消" Margin="0,0,10,0" Click="CancelButton_Click" />
-                <ui:Button x:Name="ApplyButton" Grid.Column="4" Content="应用" Margin="0,0,10,0" Click="ApplyButton_Click" />
-                <ui:Button x:Name="OkButton" Grid.Column="5" Content="确定" Appearance="Primary" Click="OkButton_Click" />
-            </Grid>
-
         </StackPanel>
+    </DockPanel>
 </Page>

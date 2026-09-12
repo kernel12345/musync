@@ -10,7 +10,7 @@
         <RootNamespace>MuSync</RootNamespace>
 
 
-        <Version>0.2.0</Version>
+        <Version>0.2.1</Version>
         <Description>MuSync - 把网易云音乐 / QQ 音乐 / 汽水音乐的播放状态同步到 Steam</Description>
 
 
@@ -20,6 +20,9 @@
         <UseWPF>true</UseWPF>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+        <!-- 单文件发布时把 WPF 原生 DLL（wpfgfx_cor3.dll 等）内嵌进 exe，运行时自动解压，
+             避免发布目录出现伴随 DLL，实现真正的单个 exe -->
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 
         <Product>MuSync</Product>
         <Title>MuSync</Title>

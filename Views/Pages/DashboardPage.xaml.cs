@@ -27,6 +27,7 @@ public partial class DashboardPage : Page
     }
 
     private readonly DispatcherTimer _updateTimer;
+    private readonly DispatcherTimer _perfTimer;
     private readonly TextBlock[] _playerNameLabels = new TextBlock[3];
     private readonly Border[] _coverBorders = new Border[3];
     private readonly UIElement[] _coverPlaceholders = new UIElement[3];
@@ -59,6 +60,8 @@ public partial class DashboardPage : Page
         }
         _updateTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(1) };
         _updateTimer.Tick += (_, _) => UpdateDisplay();
+        _perfTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
+        _perfTimer.Tick += (_, _) => RefreshMemoryInfo();
         IsVisibleChanged += OnIsVisibleChanged;
     }
 
@@ -69,11 +72,37 @@ public partial class DashboardPage : Page
         {
             UpdateDisplay(true);
             _updateTimer.Start();
+            _perfTimer.Start();
+            RefreshMemoryInfo();
         }
         else
         {
             _updateTimer.Stop();
+            _perfTimer.Stop();
         }
+    }
+
+    private void RefreshMemoryInfo()
+    {
+        try
+        {
+            var memoryInfo = PerformanceMonitor.GetMemoryInfo();
+            var cacheStats = PerformanceMonitor.GetCacheStatistics();
+            MemoryInfoText.Text =
+                $"工作集: {memoryInfo.GetFormattedWorkingSet()}, 私有: {memoryInfo.GetFormattedPrivateMemory()}, 虚拟: {memoryInfo.GetFormattedVirtualMemory()}\n" +
+                $"GC托管: {memoryInfo.GetFormattedGcMemory()}\n" +
+                $"图片缓存: {cacheStats.ImageCacheCount} 项 | 模块缓存: {cacheStats.ModuleCacheCount + cacheStats.ProcessModuleCacheCount} 项\n" +
+                $"更新于: {memoryInfo.Timestamp:HH:mm:ss}";
+        }
+        catch (Exception ex)
+        {
+            MemoryInfoText.Text = $"获取内存信息失败: {ex.Message}";
+        }
+    }
+
+    private void RefreshMemoryButton_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshMemoryInfo();
     }
 
     private void UpdateDisplay(bool forceRefresh = false)

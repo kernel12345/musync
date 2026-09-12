@@ -85,6 +85,36 @@ internal class SteamStatusManager
         }
     }
 
+    /// <summary>
+    /// 推送「实时操作」状态：把鼠标当前操作的应用名显示到 Steam 状态位（如「正在使用 Chrome」）。
+    /// 仅在用户启用「推送实时操作」且无音乐可同步时由 RpcManager 调用；真实游戏/手动暂停时同样不推送。
+    /// </summary>
+    public async Task ApplyRealtimeActivityAsync(string appName)
+    {
+        if (!_session.IsLoggedOn) return;
+        var config = Configurations.Instance.Settings;
+        if (config.PauseWhenPlayingGame && _session.IsRealGameActive) return;
+        if (_manualPause) return;
+        var text = FormatRealtimeActivity(appName);
+        if (text == _lastSetName) return;
+        try
+        {
+            await _session.SetGameNameAsync(text).ConfigureAwait(false);
+            _lastSetName = text;
+            Debug.WriteLine($"[SteamStatus] 实时操作已更新: {text}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[SteamStatus] 更新实时操作失败: {ex.Message}");
+        }
+    }
+
+    private static string FormatRealtimeActivity(string appName)
+    {
+        var name = string.IsNullOrWhiteSpace(appName) ? "未知应用" : appName.Trim();
+        return TruncateToUtf8ByteLength($"正在使用 {name}", MaxStatusUtf8Bytes);
+    }
+
     /// <summary>返回空闲时应显示的签名（已去除首尾空白并截断到 Steam 字节上限）；未启用或内容为空时返回 null。</summary>
     public static string? GetIdleSignature(ConfigData config)
     {

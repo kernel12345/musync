@@ -1,34 +1,22 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Threading;
 using MuSync.Models;
 using MuSync.Utils;
 using MessageBox = System.Windows.MessageBox;
 namespace MuSync;
 /// <summary>
 /// 设置页：Windows 11 设置风格卡片 + ToggleSwitch。
-/// 四组卡片（程序/Steam 显示/预览/性能）+ 预览实时联动 + 确定/取消/应用三按钮语义，
-/// 行为自 SettingsForm 逐行移植，仍直接读写 Configurations。
+/// 账户操作（退出/重新登录）置于顶部，各项设置改动实时写入 Configurations 并立即生效。
 /// </summary>
 public partial class SettingsPage : Page
 {
-    private readonly DispatcherTimer _perfTimer;
     private bool _initialized;
 
     public SettingsPage()
     {
         InitializeComponent();
-        _perfTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
-        _perfTimer.Tick += (_, _) => RefreshMemoryInfo();
         Loaded += (_, _) => LoadSettings();
-        IsVisibleChanged += (_, e) =>
-        {
-            // 页面不可见时停止 2s 性能刷新
-            if (e.NewValue is true) _perfTimer.Start();
-            else _perfTimer.Stop();
-        };
     }
 
     private void LoadSettings()
@@ -50,6 +38,7 @@ public partial class SettingsPage : Page
         EnableCustomSignatureToggle.IsChecked = settings.EnableCustomSignature;
         CustomSignatureTextBox.Text = settings.CustomSignature;
         CustomSignatureTextBox.IsEnabled = settings.EnableCustomSignature;
+        PushRealtimeActivityToggle.IsChecked = settings.PushRealtimeActivity;
         if (settings.StatusPriority == SteamStatusPriority.Artist)
         {
             PriorityArtistRadio.IsChecked = true;
@@ -77,6 +66,7 @@ public partial class SettingsPage : Page
         settings.CustomPrefix = CustomPrefixTextBox.Text;
         settings.EnableCustomSignature = EnableCustomSignatureToggle.IsChecked == true;
         settings.CustomSignature = CustomSignatureTextBox.Text;
+        settings.PushRealtimeActivity = PushRealtimeActivityToggle.IsChecked == true;
         settings.StatusPriority = PriorityArtistRadio.IsChecked == true
             ? SteamStatusPriority.Artist
             : SteamStatusPriority.ProgressBar;
@@ -132,24 +122,6 @@ public partial class SettingsPage : Page
         });
     }
 
-    private void RefreshMemoryInfo()
-    {
-        try
-        {
-            var memoryInfo = PerformanceMonitor.GetMemoryInfo();
-            var cacheStats = PerformanceMonitor.GetCacheStatistics();
-            MemoryInfoText.Text =
-                $"工作集: {memoryInfo.GetFormattedWorkingSet()}, 私有: {memoryInfo.GetFormattedPrivateMemory()}, 虚拟: {memoryInfo.GetFormattedVirtualMemory()}\n" +
-                $"GC托管: {memoryInfo.GetFormattedGcMemory()}\n" +
-                $"图片缓存: {cacheStats.ImageCacheCount} 项 | 模块缓存: {cacheStats.ModuleCacheCount + cacheStats.ProcessModuleCacheCount} 项\n" +
-                $"更新于: {memoryInfo.Timestamp:HH:mm:ss}";
-        }
-        catch (Exception ex)
-        {
-            MemoryInfoText.Text = $"获取内存信息失败: {ex.Message}";
-        }
-    }
-
     private void Setting_Changed(object sender, RoutedEventArgs e)
     {
         if (!_initialized) return;
@@ -157,33 +129,13 @@ public partial class SettingsPage : Page
         CustomPrefixTextBox.IsEnabled = EnableCustomPrefixToggle.IsChecked == true;
         CustomSignatureTextBox.IsEnabled = EnableCustomSignatureToggle.IsChecked == true;
         UpdatePreview();
+        SaveSettings();
     }
 
     private void TextBox_Changed(object sender, TextChangedEventArgs e)
     {
+        if (!_initialized) return;
         UpdatePreview();
-    }
-
-    private void RefreshMemoryButton_Click(object sender, RoutedEventArgs e)
-    {
-        RefreshMemoryInfo();
-    }
-
-    private void OkButton_Click(object sender, RoutedEventArgs e)
-    {
-        SaveSettings();
-        (Window.GetWindow(this) as MainWindow)?.NavigateToDashboard();
-    }
-
-    private void CancelButton_Click(object sender, RoutedEventArgs e)
-    {
-        // 取消 = 丢弃未保存的改动，从配置回读后返回主页
-        LoadSettings();
-        (Window.GetWindow(this) as MainWindow)?.NavigateToDashboard();
-    }
-
-    private void ApplyButton_Click(object sender, RoutedEventArgs e)
-    {
         SaveSettings();
     }
 
@@ -198,6 +150,7 @@ public partial class SettingsPage : Page
         settings.SteamRefreshToken = "";
         settings.SteamGuardData = "";
         Configurations.Instance.Save();
+        (Window.GetWindow(this) as MainWindow)?.PrepareToExit();
         Application.Current.Shutdown();
     }
 

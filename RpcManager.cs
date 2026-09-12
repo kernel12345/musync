@@ -55,6 +55,8 @@ internal class RpcManager(SteamStatusManager steamManager)
     private static readonly TimeSpan IdlePollInterval = TimeSpan.FromMilliseconds(1200);
     private DateTime _lastProgressUpdateTime = DateTime.MinValue;
     private DateTime _lastTrayStatusUpdateTime = DateTime.MinValue;
+    private string _lastRealtimeAppName = "";
+    private bool _realtimePushed;
 
     public void RequestStateRefresh() => _stateRefreshRequested = true;
 
@@ -123,10 +125,52 @@ internal class RpcManager(SteamStatusManager steamManager)
         }
         else
         {
-            Debug.WriteLine("[MuSync] 无活跃播放器，应用空闲签名（未配置则清除 Steam 状态）");
-            Logger.Info("[MuSync] 无活跃播放器，应用空闲签名（未配置则清除 Steam 状态）");
-            await steamManager.ApplyIdleSignatureAsync();
+            Debug.WriteLine("[MuSync] 无活跃播放器，同步空闲/实时操作状态");
+            Logger.Info("[MuSync] 无活跃播放器，同步空闲/实时操作状态");
+            await SynchronizeRealtimeActivityAsync();
         }
+    }
+
+    /// <summary>
+    /// 无音乐可同步时的状态处理：启用「推送实时操作」时，把鼠标当前操作的应用名推送到 Steam；
+    /// 否则应用空闲签名（未配置则清除状态）。前台应用变化、功能开关切换时都会在此刷新。
+    /// </summary>
+    private async Task SynchronizeRealtimeActivityAsync()
+    {
+        // 有音乐播放时音乐优先，实时操作让位并重置跟踪（音乐状态由其它路径负责）
+        if (ResolveActiveState().State != null)
+        {
+            _lastRealtimeAppName = "";
+            _realtimePushed = false;
+            return;
+        }
+        var config = Configurations.Instance.Settings;
+        if (!config.PushRealtimeActivity)
+        {
+            if (_realtimePushed)
+            {
+                _realtimePushed = false;
+                _lastRealtimeAppName = "";
+                await steamManager.ApplyIdleSignatureAsync();
+            }
+            return;
+        }
+        var appName = Win32Api.User32.GetForegroundAppName();
+        if (string.IsNullOrEmpty(appName))
+        {
+            // 前台无有效窗口（如桌面）：退回空闲签名，避免一直停留在上一个应用
+            if (_realtimePushed)
+            {
+                _realtimePushed = false;
+                _lastRealtimeAppName = "";
+                await steamManager.ApplyIdleSignatureAsync();
+            }
+            return;
+        }
+        if (appName == _lastRealtimeAppName) return;
+        _lastRealtimeAppName = appName;
+        _realtimePushed = true;
+        await steamManager.ApplyRealtimeActivityAsync(appName);
     }
 
     public async Task Start()
@@ -262,6 +306,9 @@ internal class RpcManager(SteamStatusManager steamManager)
 
                 // 活跃源仲裁：变化时自动切换 Steam 状态
                 await SynchronizeActiveSourceAsync();
+
+                // 实时操作：无音乐时按前台应用刷新 Steam 状态（前台变化/开关切换都在此轮询）
+                await SynchronizeRealtimeActivityAsync();
 
                 var realGamePause = steamManager.IsRealGameActive &&
                                     Configurations.Instance.Settings.PauseWhenPlayingGame;

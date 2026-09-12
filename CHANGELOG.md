@@ -3,6 +3,14 @@
 本项目的版本变更记录。格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.2.1] - 2026-09-12
+
+### 修复
+
+- Release 改为**真正的单文件**：开启 `IncludeNativeLibrariesForSelfExtract`，把 WPF 原生 DLL
+  （wpfgfx_cor3.dll 等）内嵌进 exe 并在首次运行时自动解压。发布产物不再出现 5 个伴随 DLL，
+  下载单个 `MuSync.exe` 即可运行。
+
 ## [0.2.0] - 2026-09-12
 
 ### 变更

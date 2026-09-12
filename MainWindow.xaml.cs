@@ -17,6 +17,7 @@ namespace MuSync;
 public partial class MainWindow : FluentWindow
 {
     private Type _pendingPage = typeof(DashboardPage);
+    private bool _isExiting;
 
     public MainWindow()
     {
@@ -25,6 +26,9 @@ public partial class MainWindow : FluentWindow
         // Mica 不支持的环境（Win10）下 WindowBackdropType 属性设置会被内部跳过，自动回落主题背景
         SystemThemeWatcher.Watch(this, WindowBackdropType.Mica, updateAccents: true);
     }
+
+    /// <summary>标记为显式退出（托盘“退出”/设置页“退出登录”），关闭窗口时不再拦截为最小化到托盘。</summary>
+    public void PrepareToExit() => _isExiting = true;
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -72,6 +76,11 @@ public partial class MainWindow : FluentWindow
     private void Window_Closing(object? sender, CancelEventArgs e)
     {
         var config = Configurations.Instance;
+        if (_isExiting)
+        {
+            // 显式退出：直接关闭，不再拦截为最小化到托盘
+            return;
+        }
         if (config.Settings.CloseToTray)
         {
             e.Cancel = true;

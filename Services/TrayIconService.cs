@@ -43,7 +43,11 @@ internal static class TrayIconService
             exitMenuItem);
         showSettingsItem.Click += (_, _) => _mainWindow?.ShowAndNavigateToSettings();
         showMainWindowItem.Click += (_, _) => _mainWindow?.ShowAndActivate();
-        exitMenuItem.Click += (_, _) => Application.Current.Shutdown();
+        exitMenuItem.Click += (_, _) =>
+        {
+            _mainWindow?.PrepareToExit();
+            Application.Current.Shutdown();
+        };
         _trayIcon = new WinForms.NotifyIcon
         {
             Icon = AppResource.Icon,
