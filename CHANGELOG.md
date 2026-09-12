@@ -5,12 +5,32 @@
 
 ## [Unreleased]
 
+### 变更
+
+- **界面层从 WinForms 全面迁移到 WPF + WPF-UI 4.3.0**（Windows 11 Fluent 风格）：
+  - `FluentWindow` + Mica 云母背景，深浅色自动跟随系统主题（`SystemThemeWatcher`）。
+  - 左侧 `NavigationView` 三页导航：主界面 / 播放器 / 设置，页面缓存保留切换状态。
+  - 主界面保留三张播放器卡片（封面、歌名、歌手、专辑、实时进度条），双击歌名打开歌曲页。
+  - 新增「播放器」监控页：各播放器运行状态、错误码、当前歌曲与 Steam 会话详情。
+  - 设置页改为 Win11 设置风格的圆角卡片（自定义 `SettingsCard` 样式）+ `ToggleSwitch`，保留确定/取消/应用交互，改动实时预览。
+  - Steam 登录与手机令牌/邮箱验证码窗口改为 WPF 对话框（替代 WinForms 窗口与 `InputBox`）。
+  - 后台逻辑（`RpcManager`、`SteamStatusManager`、`SteamSessionManager`、`ImageCacheManager` 等）全部复用不改；仅托盘状态回调入口改走 `TrayIconService`。
+  - 删除 `Program.cs`、`MainForm.cs`、`SettingsForm.cs`、`SteamLoginForm.cs`，启动入口改为 `App.xaml`。
+
 ### 新增
 
 - **自定义 Steam 在线签名**：没有播放音乐或歌曲暂停时，可在 Steam「正在玩」状态位显示自定义签名
   （设置 → Steam 显示设置 → 空闲/暂停时显示签名）。恢复播放自动切回歌曲信息（暂停期间不再推送
   `歌曲 (Paused)`）；正在玩真实 Steam 游戏、手动暂停同步或退出程序时自动隐藏。签名自动去除首尾空白并
   按 UTF-8 63 字节上限截断，设置窗口提供实时预览。
+- **汽水音乐支持（替代洛雪音乐）**：通过 Windows 系统媒体会话（SMTC /
+  GlobalSystemMediaTransportControls）读取歌名、歌手、播放状态、时间线与封面，无需任何启动参数或特殊设置。
+
+### 修复
+
+- **界面频繁无响应**：封面图的文件 IO（`File.ReadAllBytes`）与 GDI+ 解码（`Image.FromStream`）
+  原先在 UI 线程同步执行，单张大图耗时 50–200ms，连续切歌可造成数秒卡死。
+  现已全部移至后台线程（`Task.Run`），内存缓存命中路径保持直接返回；Steam 在线状态推送不受影响。
 
 ### 优化
 

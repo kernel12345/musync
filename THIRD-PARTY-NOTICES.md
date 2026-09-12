@@ -43,3 +43,11 @@ MuSync 的代码与设计大量借鉴/沿用了以下开源项目，特此致谢
 ## SteamKit2
 
 > Steam 网络客户端库：https://github.com/SteamRE/SteamKit
+> LGPL-2.1
+
+## WPF-UI
+
+> Windows 11 Fluent 风格控件库（MIT 协议）：https://github.com/lepoco/wpfui
+>
+> Copyright (c) 2021-2024 Leszek Pomianowski and WPF UI Contributors.
+> Licensed under the MIT License（全文见上游仓库 LICENSE）。
