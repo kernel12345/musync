@@ -34,6 +34,11 @@
                                        TargetPageType="{x:Type pages:SettingsPage}"
                                        NavigationCacheMode="Required" />
             </ui:NavigationView.MenuItems>
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="关于" Icon="{ui:SymbolIcon Info24}"
+                                       TargetPageType="{x:Type pages:AboutPage}"
+                                       NavigationCacheMode="Required" />
+            </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
     </Grid>
 </ui:FluentWindow>
