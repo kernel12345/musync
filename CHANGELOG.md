@@ -3,6 +3,17 @@
 本项目的版本变更记录。格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.2.3] - 2026-09-16
+
+### 新增
+
+- **双击桌面空白处隐藏图标**：在桌面空白处双击即可渐隐隐藏全部桌面图标，再次双击渐显恢复
+  （设置 → 程序设置 → 「双击桌面隐藏图标」，默认关闭）。参照 [DeskHider](https://github.com/iandiv/DeskHider)
+  方案实现：取鼠标下顶层窗口类名判定桌面，跨进程枚举图标包围矩形（`LVM_GETITEMRECT` +
+  `VirtualAllocEx`）判定空白处——双击图标正常打开不受影响。显隐带约 400ms 淡出/淡入过渡
+  （`WS_EX_LAYERED` + Alpha 渐变，保留分层样式避免闪烁），程序退出时自动恢复图标显示。
+  全程使用无指针/目标进程内分配的消息，不会导致 explorer.exe 崩溃重启。
+
 ## [0.2.2] - 2026-09-12
 
 ### 新增

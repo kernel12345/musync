@@ -51,7 +51,7 @@
                                          Checked="Setting_Changed" Unchecked="Setting_Changed" />
                     </Grid>
                 </Border>
-                <Border Style="{StaticResource SettingsCard}">
+                <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,4">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -64,6 +64,22 @@
                             <TextBlock Text="程序启动后不显示主窗口，仅驻留托盘" Style="{StaticResource SettingsCardDescription}" />
                         </StackPanel>
                         <ui:ToggleSwitch x:Name="StartInTrayToggle" Grid.Column="2" VerticalAlignment="Center"
+                                         Checked="Setting_Changed" Unchecked="Setting_Changed" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Symbol="Desktop24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="双击桌面隐藏图标" Style="{StaticResource SettingsCardTitle}" />
+                            <TextBlock Text="在桌面空白处双击隐藏桌面图标，再次双击恢复显示" Style="{StaticResource SettingsCardDescription}" />
+                        </StackPanel>
+                        <ui:ToggleSwitch x:Name="DesktopIconsToggle" Grid.Column="2" VerticalAlignment="Center"
                                          Checked="Setting_Changed" Unchecked="Setting_Changed" />
                     </Grid>
                 </Border>

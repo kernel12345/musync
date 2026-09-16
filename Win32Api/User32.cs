@@ -23,10 +23,10 @@ internal static partial class User32
     [LibraryImport("user32.dll", EntryPoint = "FindWindowW", SetLastError = true,
         StringMarshalling = StringMarshalling.Utf16)]
     internal static partial IntPtr FindWindow(string? lpClassName, string? lpWindowName);
-    private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
+    internal delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
+    internal static partial bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
     [LibraryImport("user32.dll", EntryPoint = "GetClassNameW", StringMarshalling = StringMarshalling.Utf16)]
     private static partial int GetClassName(IntPtr hwnd, [Out] char[] lpClassName, int nMaxCount);
     [LibraryImport("user32.dll", EntryPoint = "GetWindowTextW", StringMarshalling = StringMarshalling.Utf16)]
@@ -35,7 +35,7 @@ internal static partial class User32
     private static partial int GetWindowTextLength(IntPtr hWnd);
     [LibraryImport("user32.dll")]
     internal static partial int GetWindowThreadProcessId(IntPtr handle, out int pid);
-    private static string GetClassName(IntPtr hwnd)
+    internal static string GetClassName(IntPtr hwnd)
     {
         var buffer = new char[256];
         var charsCopied = GetClassName(hwnd, buffer, buffer.Length);
@@ -102,4 +102,104 @@ internal static partial class User32
             return null;
         }
     }
+
+    // ---------------- 桌面图标双击隐藏（低级鼠标钩子 + 桌面窗口操作） ----------------
+    internal const int WhMouseLl = 14;
+
+    internal delegate IntPtr MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MSG
+    {
+        public IntPtr hwnd;
+        public uint message;
+        public IntPtr wParam;
+        public IntPtr lParam;
+        public uint time;
+        public POINT pt;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MSLLHOOKSTRUCT
+    {
+        public POINT pt;
+        public uint mouseData;
+        public uint flags;
+        public uint time;
+        public UIntPtr dwExtraInfo;
+    }
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowsHookExW", SetLastError = true)]
+    internal static partial IntPtr SetWindowsHookEx(int idHook, MouseHookProc lpfn, IntPtr hMod, uint dwThreadId);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool UnhookWindowsHookEx(IntPtr hhk);
+
+    [LibraryImport("user32.dll")]
+    internal static partial IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+    [LibraryImport("user32.dll", EntryPoint = "FindWindowExW", SetLastError = true,
+        StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial IntPtr FindWindowEx(IntPtr hWndParent, IntPtr hWndChildAfter,
+        string? lpszClass, string? lpszWindow);
+
+    [LibraryImport("user32.dll")]
+    internal static partial IntPtr WindowFromPoint(POINT point);
+
+    [LibraryImport("user32.dll")]
+    internal static partial IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool ScreenToClient(IntPtr hWnd, ref POINT point);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
+    internal static partial IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+    internal static partial IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsWindowVisible(IntPtr hWnd);
+
+    [LibraryImport("user32.dll", EntryPoint = "SendMessageTimeoutW", SetLastError = true)]
+    internal static partial IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam,
+        uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+
+    [LibraryImport("user32.dll")]
+    internal static partial uint GetDoubleClickTime();
+
+    [LibraryImport("user32.dll")]
+    internal static partial int GetSystemMetrics(int nIndex);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetMessageW")]
+    internal static partial int GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+
+    [LibraryImport("user32.dll", EntryPoint = "PostThreadMessageW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool PostThreadMessage(uint threadId, uint msg, IntPtr wParam, IntPtr lParam);
+
+    // kernel32
+    [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial IntPtr GetModuleHandle(string? lpModuleName);
+
+    [LibraryImport("kernel32.dll")]
+    internal static partial uint GetCurrentThreadId();
 }

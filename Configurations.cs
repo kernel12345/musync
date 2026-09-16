@@ -27,6 +27,8 @@ internal class ConfigData
     public string CustomSignature { get; set; } = "";
     /// <summary>推送实时操作：没有音乐可同步时，把鼠标当前操作的应用名推送到 Steam 状态位。</summary>
     public bool PushRealtimeActivity { get; set; }
+    /// <summary>桌面增强：双击桌面空白处隐藏桌面图标（再次双击恢复）。</summary>
+    public bool DoubleClickHideDesktopIcons { get; set; }
     /// <summary>挂游戏时长：当前是否处于挂时长状态（登录后自动恢复）。</summary>
     public bool GameIdleEnabled { get; set; }
     /// <summary>挂游戏时长：正在挂的 Steam AppID 列表（最多 30 个，Steam 并发游玩上限）。</summary>

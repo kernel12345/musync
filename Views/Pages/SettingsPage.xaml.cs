@@ -28,6 +28,7 @@ public partial class SettingsPage : Page
         settings.AutoStart = isAutoStartEnabled;
         CloseToTrayToggle.IsChecked = settings.CloseToTray;
         StartInTrayToggle.IsChecked = settings.StartInTray;
+        DesktopIconsToggle.IsChecked = settings.DoubleClickHideDesktopIcons;
         ShowArtistNameToggle.IsChecked = settings.ShowArtistName;
         ShowProgressBarToggle.IsChecked = settings.ShowProgressBar;
         PauseWhenPlayingGameToggle.IsChecked = settings.PauseWhenPlayingGame;
@@ -58,6 +59,7 @@ public partial class SettingsPage : Page
         settings.AutoStart = isAutoStartChecked;
         settings.CloseToTray = CloseToTrayToggle.IsChecked == true;
         settings.StartInTray = StartInTrayToggle.IsChecked == true;
+        settings.DoubleClickHideDesktopIcons = DesktopIconsToggle.IsChecked == true;
         settings.ShowArtistName = ShowArtistNameToggle.IsChecked == true;
         settings.ShowProgressBar = ShowProgressBarToggle.IsChecked == true;
         settings.PauseWhenPlayingGame = PauseWhenPlayingGameToggle.IsChecked == true;
@@ -71,6 +73,9 @@ public partial class SettingsPage : Page
             ? SteamStatusPriority.Artist
             : SteamStatusPriority.ProgressBar;
         Configurations.Instance.Save();
+        // 双击隐藏桌面图标开关即时生效（Start/Stop 均为幂等操作）
+        if (settings.DoubleClickHideDesktopIcons) DesktopIconService.Start();
+        else DesktopIconService.Stop();
         AppServices.Rpc?.RequestStateRefresh();
         if (isAutoStartChecked == Win32Api.AutoStart.Check()) return;
         var success = Win32Api.AutoStart.Set(isAutoStartChecked);

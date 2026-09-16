@@ -32,6 +32,8 @@ public partial class App : Application
         var mainWindow = new MainWindow();
         MainWindow = mainWindow;
         TrayIconService.Initialize(mainWindow);
+        if (Configurations.Instance.Settings.DoubleClickHideDesktopIcons)
+            DesktopIconService.Start();
         if (!Configurations.Instance.Settings.StartInTray)
             mainWindow.Show();
         else
@@ -92,6 +94,7 @@ public partial class App : Application
         _cts?.Cancel();
         AppServices.Steam?.ClearStatus();
         AppServices.Session?.Dispose();
+        DesktopIconService.Stop();
         TrayIconService.Dispose();
         _mutex?.Dispose();
     }
