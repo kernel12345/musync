@@ -198,6 +198,9 @@ internal static partial class User32
     [LibraryImport("user32.dll", EntryPoint = "GetMessageW")]
     internal static partial int GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 
+    [LibraryImport("user32.dll", EntryPoint = "DispatchMessageW")]
+    internal static partial IntPtr DispatchMessage(ref MSG lpMsg);
+
     [LibraryImport("user32.dll", EntryPoint = "PostThreadMessageW", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool PostThreadMessage(uint threadId, uint msg, IntPtr wParam, IntPtr lParam);
@@ -236,7 +239,7 @@ internal static partial class User32
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool IsWindow(IntPtr hWnd);
 
-    [LibraryImport("user32.dll")]
+    [LibraryImport("user32.dll", EntryPoint = "DefWindowProcW")]
     internal static partial IntPtr DefWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
     [LibraryImport("user32.dll", SetLastError = true)]

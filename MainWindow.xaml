@@ -33,6 +33,9 @@
                 <ui:NavigationViewItem Content="桌面" Icon="{ui:SymbolIcon Desktop24}"
                                        TargetPageType="{x:Type pages:DesktopPage}"
                                        NavigationCacheMode="Required" />
+                <ui:NavigationViewItem Content="日志" Icon="{ui:SymbolIcon History24}"
+                                       TargetPageType="{x:Type pages:LogsPage}"
+                                       NavigationCacheMode="Required" />
                 <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}"
                                        TargetPageType="{x:Type pages:SettingsPage}"
                                        NavigationCacheMode="Required" />

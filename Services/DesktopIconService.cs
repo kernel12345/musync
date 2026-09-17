@@ -40,6 +40,7 @@ internal static partial class DesktopIconService
     private const int GaRoot = 2;
     private const int ProcessVmOperation = 0x0008;
     private const int ProcessVmRead = 0x0010;
+    private const int ProcessVmWrite = 0x0020;
     private const uint MemCommit = 0x1000;
     private const uint MemRelease = 0x8000;
     private const uint PageReadwrite = 0x04;
@@ -201,9 +202,12 @@ internal static partial class DesktopIconService
                 Logger.Warn($"安装桌面双击钩子失败 (错误码 {Marshal.GetLastWin32Error()})");
                 return;
             }
-            // 低级钩子回调依赖本线程的消息循环
-            while (GetMessage(out _, IntPtr.Zero, 0, 0) > 0)
+            Logger.Info("桌面双击隐藏图标钩子已安装");
+            // 低级钩子回调依赖本线程的消息循环；必须 DispatchMessage，否则仅消息窗口的
+            // WndProc 永远不会被调用（PostMessage 进来的 WmToggle 会一直留在队列里）
+            while (GetMessage(out var msg, IntPtr.Zero, 0, 0) > 0)
             {
+                DispatchMessage(ref msg);
             }
         }
         catch (Exception ex)
@@ -225,16 +229,18 @@ internal static partial class DesktopIconService
 
     private static IntPtr MessageWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
-        if (msg == WmToggle)
+        // 托管窗口过程由非托管代码回调，任何异常穿越该边界都会直接终止进程，必须整体兜底
+        try
         {
-            try
+            if (msg == WmToggle)
             {
                 ToggleIfDesktopEmptyArea(new POINT { X = wParam.ToInt32(), Y = lParam.ToInt32() });
+                return IntPtr.Zero;
             }
-            catch (Exception ex)
-            {
-                Logger.Warn($"桌面双击处理异常: {ex.Message}");
-            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"桌面双击处理异常: {ex.Message}");
             return IntPtr.Zero;
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -250,7 +256,10 @@ internal static partial class DesktopIconService
             {
                 var info = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
                 if (IsDoubleClick(info.pt) && _msgWnd != IntPtr.Zero)
+                {
+                    Logger.Info($"[桌面] 检测到双击 {info.pt.X},{info.pt.Y}");
                     PostMessage(_msgWnd, WmToggle, (IntPtr)info.pt.X, (IntPtr)info.pt.Y);
+                }
             }
         }
         catch
@@ -274,9 +283,20 @@ internal static partial class DesktopIconService
         var isDouble = now - _lastDownTick <= interval &&
                        Math.Abs(pt.X - _lastDownX) <= maxX &&
                        Math.Abs(pt.Y - _lastDownY) <= maxY;
-        _lastDownTick = now;
-        _lastDownX = pt.X;
-        _lastDownY = pt.Y;
+        if (isDouble)
+        {
+            // 与 Windows 双击语义一致：本次双击成立后立即“解散”配对，连续快按 4 下只会产生
+            // 两次双击（第 3 下是新配对的起点），否则连击流中每一下都会被误判为双击
+            _lastDownTick = 0;
+            _lastDownX = 0;
+            _lastDownY = 0;
+        }
+        else
+        {
+            _lastDownTick = now;
+            _lastDownX = pt.X;
+            _lastDownY = pt.Y;
+        }
         return isDouble;
     }
 
@@ -320,7 +340,12 @@ internal static partial class DesktopIconService
 
         // 图标可见：仅当确认鼠标不在任何图标矩形内（空白处）才隐藏；
         // 点在图标上或判定不确定时一律放行，保证双击图标打开应用绝不触发渐隐
-        if (IsMouseOverIconOrUnknown(list, pt)) return;
+        var overIcon = IsMouseOverIconOrUnknown(list, pt);
+        if (overIcon)
+        {
+            Logger.Info("[桌面] 双击落在图标上或判定不确定，不隐藏");
+            return;
+        }
         FadeWindow(list, false);
         Logger.Info("双击桌面空白处：隐藏桌面图标");
     }
@@ -441,7 +466,7 @@ internal static partial class DesktopIconService
 
         GetWindowThreadProcessId(listHwnd, out var pid);
         if (pid == 0) return true;
-        var process = OpenProcess(ProcessVmOperation | ProcessVmRead, false, pid);
+        var process = OpenProcess(ProcessVmOperation | ProcessVmRead | ProcessVmWrite, false, pid);
         if (process == IntPtr.Zero)
         {
             Logger.Warn($"打开 explorer 进程读取图标区域失败 (错误码 {Marshal.GetLastWin32Error()})，本次双击不隐藏图标");
@@ -459,9 +484,16 @@ internal static partial class DesktopIconService
                 var readOk = 0;
                 for (var i = 0; i < count; i++)
                 {
-                    if (!WriteProcessMemory(process, remote, zeroBuf, RectSize, IntPtr.Zero)) continue;
+                    // 重置输入 RECT（left=0 即 LVIR_BOUNDS）。若写被拦截，则释放后重新 VirtualAllocEx
+                    // （新页保证零初始化），而不是直接放弃该图标
+                    if (!WriteProcessMemory(process, remote, zeroBuf, RectSize, IntPtr.Zero))
+                    {
+                        VirtualFreeEx(process, remote, nuint.Zero, MemRelease);
+                        remote = VirtualAllocEx(process, IntPtr.Zero, (nuint)RectSize, MemCommit, PageReadwrite);
+                        if (remote == IntPtr.Zero) break;
+                    }
                     if (SendMessageTimeout(listHwnd, LvmGetItemRect, (IntPtr)i, remote,
-                            SmtoBlock | SmtoAbortIfHung, 100, out _) == IntPtr.Zero) continue;
+                            SmtoBlock | SmtoAbortIfHung, 200, out _) == IntPtr.Zero) continue;
                     if (!ReadProcessMemory(process, remote, rectBuf, RectSize, IntPtr.Zero)) continue;
                     readOk++;
                     var left = BitConverter.ToInt32(rectBuf, 0) - IconRectPadding;
