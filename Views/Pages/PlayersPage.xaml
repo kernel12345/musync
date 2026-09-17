@@ -148,51 +148,5 @@
                 </Grid>
             </Border>
 
-            <!-- ============ Steam 会话 ============ -->
-            <Border Style="{StaticResource SettingsCard}" Margin="0,4,0,10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="Person24" Style="{StaticResource SettingsCardIcon}"
-                                   VerticalAlignment="Top" Margin="0,2,14,0" />
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Steam 会话" Style="{StaticResource SettingsCardTitle}" FontWeight="SemiBold" />
-                        <Grid Margin="0,10,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="72" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="连接" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <TextBlock x:Name="SConn" Grid.Column="1" FontSize="12" Margin="8,0,0,0"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
-                            <TextBlock Text="登录" Grid.Row="1" FontSize="12" Margin="0,4,0,0"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <TextBlock x:Name="SLogon" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
-                            <TextBlock Text="真实游戏" Grid.Row="2" FontSize="12" Margin="0,4,0,0"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <TextBlock x:Name="SRealGame" Grid.Row="2" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
-                            <TextBlock Text="手动暂停" Grid.Row="3" FontSize="12" Margin="0,4,0,0"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <TextBlock x:Name="SManualPause" Grid.Row="3" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <TextBlock Margin="4,2,4,0" FontSize="12" TextWrapping="Wrap"
-                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                       Text="同一时刻只有一个“正在播放（未暂停）”的播放器拥有 Steam 状态发言权；暂停中的播放器只刷新本地界面，Steam 状态让位给空闲签名。" />
-
         </StackPanel>
 </Page>

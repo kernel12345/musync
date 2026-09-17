@@ -26,24 +26,24 @@
                                        NavigationCacheMode="Required" />
                 <ui:NavigationViewItem Content="播放器" Icon="{ui:SymbolIcon MusicNote124}"
                                        TargetPageType="{x:Type pages:PlayersPage}"
-                                       NavigationCacheMode="Required" />
+                                       NavigationCacheMode="Disabled" />
                 <ui:NavigationViewItem Content="挂时长" Icon="{ui:SymbolIcon Games24}"
                                        TargetPageType="{x:Type pages:GameIdlePage}"
-                                       NavigationCacheMode="Required" />
+                                       NavigationCacheMode="Disabled" />
                 <ui:NavigationViewItem Content="桌面" Icon="{ui:SymbolIcon Desktop24}"
                                        TargetPageType="{x:Type pages:DesktopPage}"
-                                       NavigationCacheMode="Required" />
+                                       NavigationCacheMode="Disabled" />
                 <ui:NavigationViewItem Content="日志" Icon="{ui:SymbolIcon History24}"
                                        TargetPageType="{x:Type pages:LogsPage}"
-                                       NavigationCacheMode="Required" />
+                                       NavigationCacheMode="Disabled" />
                 <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}"
                                        TargetPageType="{x:Type pages:SettingsPage}"
-                                       NavigationCacheMode="Required" />
+                                       NavigationCacheMode="Disabled" />
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
                 <ui:NavigationViewItem Content="关于" Icon="{ui:SymbolIcon Info24}"
                                        TargetPageType="{x:Type pages:AboutPage}"
-                                       NavigationCacheMode="Required" />
+                                       NavigationCacheMode="Disabled" />
             </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
     </Grid>

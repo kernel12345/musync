@@ -255,9 +255,11 @@ internal static partial class DesktopIconService
             if (nCode >= 0 && wParam.ToInt64() == WmLButtonDown)
             {
                 var info = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
-                if (IsDoubleClick(info.pt) && _msgWnd != IntPtr.Zero)
+                // 双击判定与“是否在桌面”都在回调内完成（均为本地轻量 API），
+                // 只有 Progman/WorkerW 上的双击才记录并投递，其他应用中的双击完全不感知
+                if (IsDoubleClick(info.pt) && _msgWnd != IntPtr.Zero && IsDesktopPoint(info.pt))
                 {
-                    Logger.Info($"[桌面] 检测到双击 {info.pt.X},{info.pt.Y}");
+                    Logger.Info($"[桌面] 检测到桌面双击 {info.pt.X},{info.pt.Y}");
                     PostMessage(_msgWnd, WmToggle, (IntPtr)info.pt.X, (IntPtr)info.pt.Y);
                 }
             }
@@ -300,6 +302,15 @@ internal static partial class DesktopIconService
         return isDouble;
     }
 
+    /// <summary>鼠标点是否位于桌面顶层窗口（Progman；壁纸轮播时为 WorkerW）。纯本地 API，适合钩子回调内调用。</summary>
+    private static bool IsDesktopPoint(POINT pt)
+    {
+        var hwnd = WindowFromPoint(pt);
+        if (hwnd == IntPtr.Zero) return false;
+        var rootClass = GetClassName(GetAncestor(hwnd, GaRoot));
+        return rootClass is "Progman" or "WorkerW";
+    }
+
     private static uint GetDpiAtPoint(POINT pt)
     {
         try
@@ -320,13 +331,7 @@ internal static partial class DesktopIconService
 
     private static void ToggleIfDesktopEmptyArea(POINT pt)
     {
-        var hwnd = WindowFromPoint(pt);
-        if (hwnd == IntPtr.Zero) return;
-        // 取顶层窗口类名判定桌面：图标可见时命中 SysListView32、隐藏时命中 SHELLDLL_DefView，
-        // 两种情况下顶层窗口都是 Progman（壁纸轮播场景为 WorkerW）
-        var rootClass = GetClassName(GetAncestor(hwnd, GaRoot));
-        if (rootClass is not ("Progman" or "WorkerW")) return;
-
+        // 桌面区域判定已在钩子回调中完成（IsDesktopPoint），这里直接定位图标列表
         var list = GetIconList();
         if (list == IntPtr.Zero) return;
 

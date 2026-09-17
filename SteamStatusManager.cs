@@ -69,6 +69,8 @@ internal class SteamStatusManager
         var signature = GetIdleSignature(config);
         if (signature == null)
         {
+            // 空闲轮询会高频进入本方法：状态位已是空的就不重复下发（手动暂停/游戏占用时由调用方保证不进入）
+            if (_lastSetName.Length == 0) return;
             ClearStatus();
             return;
         }

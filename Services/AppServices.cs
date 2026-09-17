@@ -12,6 +12,12 @@ internal static class AppServices
     public static SteamSessionManager? Session { get; private set; }
     public static SteamStatusManager? Steam { get; private set; }
     public static RpcManager? Rpc { get; private set; }
+
+    /// <summary>
+    /// 主窗口是否可见（隐藏到托盘为 false）。后台轮询据此降速，托盘驻留时减少 CPU 唤醒与内存压力。
+    /// 由 MainWindow 的 IsVisibleChanged 维护。
+    /// </summary>
+    public static volatile bool IsMainWindowVisible = true;
     public static void Initialize()
     {
         _cts = new CancellationTokenSource();

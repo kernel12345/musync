@@ -12,6 +12,8 @@ internal class ConfigData
     public bool AutoStart { get; set; }
     public bool CloseToTray { get; set; } = true;
     public bool StartInTray { get; set; }
+    /// <summary>是否已完成过首次启动。首次启动无论 StartInTray 设置如何都显示主窗口，之后才按设置驻留托盘。</summary>
+    public bool HasLaunchedBefore { get; set; }
     public bool ShowArtistName { get; set; } = true;
     public bool ShowProgressBar { get; set; } = true;
     public bool PauseWhenPlayingGame { get; set; } = true;

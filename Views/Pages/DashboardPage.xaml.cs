@@ -18,6 +18,7 @@ public partial class DashboardPage : Page
     private static readonly SolidColorBrush TencentBrush = Freeze(Color.FromRgb(217, 215, 23));
     private static readonly SolidColorBrush SodaBrush = Freeze(Color.FromRgb(254, 44, 85));
     private static readonly SolidColorBrush[] PlayerBrushes = [NetEaseBrush, TencentBrush, SodaBrush];
+    private static readonly string[] PlayerNames = ["网易云音乐", "QQ音乐", "汽水音乐"];
 
     private static SolidColorBrush Freeze(Color color)
     {
@@ -120,6 +121,8 @@ public partial class DashboardPage : Page
             ImageCacheManager.SetActiveKeys(_currentCacheKeys.Where(k => !string.IsNullOrEmpty(k)));
             LastUpdateLabel.Text = $"最后更新: {DateTime.Now:HH:mm:ss}";
             UpdateSteamStateLabel();
+            UpdateSteamSession();
+            UpdateLivePreview(allPlayersStatus);
         }
         catch (Exception ex)
         {
@@ -163,6 +166,78 @@ public partial class DashboardPage : Page
             SteamStateLabel.Text = text;
             SetLabelBrush(SteamStateLabel, brushKey);
         }
+    }
+
+    /// <summary>Steam 会话四行状态（自播放器页迁入）。</summary>
+    private void UpdateSteamSession()
+    {
+        var session = AppServices.Session;
+        if (session == null)
+        {
+            SConn.Text = "服务未初始化";
+            SLogon.Text = "--";
+            SRealGame.Text = "--";
+            SManualPause.Text = "--";
+            return;
+        }
+        SConn.Text = session.IsConnected ? "已连接" : "未连接";
+        SLogon.Text = session.IsLoggedOn ? $"已登录（{session.Username ?? "未知账号"}）" : "未登录";
+        SRealGame.Text = session.IsRealGameActive ? "检测到，音乐同步暂停" : "无";
+        SManualPause.Text = AppServices.Steam?.ManualPause == true ? "已暂停（托盘菜单可恢复）" : "否";
+    }
+
+    /// <summary>
+    /// 实时预览好友在 Steam 看到的状态文本：正在播放 → 实际格式化结果；
+    /// 暂停/空闲 → 实时操作或空闲签名。所有分支与 SteamStatusManager/RpcManager 的推送逻辑保持一致。
+    /// </summary>
+    private void UpdateLivePreview(System.Collections.Generic.IList<(PlayerInfo? Info, string Name, bool IsActive, RpcManager.ErrorCode Error)> allPlayersStatus)
+    {
+        var config = Configurations.Instance.Settings;
+        string preview;
+        if (!config.EnableSteamSync)
+        {
+            preview = "Steam 同步未启用";
+        }
+        else if (AppServices.Session is not { IsLoggedOn: true })
+        {
+            preview = "未登录 Steam（好友看不到状态）";
+        }
+        else if (AppServices.Steam?.ManualPause == true)
+        {
+            preview = "已手动暂停同步";
+        }
+        else if (config.PauseWhenPlayingGame && AppServices.Steam?.IsRealGameActive == true)
+        {
+            preview = "正在玩真实 Steam 游戏，音乐状态已让位";
+        }
+        else
+        {
+            PlayerInfo? activeInfo = null;
+            var activeName = "";
+            for (var i = 0; i < allPlayersStatus.Count; i++)
+            {
+                if (!allPlayersStatus[i].IsActive) continue;
+                activeInfo = allPlayersStatus[i].Info;
+                activeName = i < PlayerNames.Length ? PlayerNames[i] : allPlayersStatus[i].Name;
+                break;
+            }
+            if (activeInfo is { } info)
+            {
+                preview = SteamStatusManager.GetStatusPreview(info, activeName, config);
+            }
+            else if (config.PushRealtimeActivity)
+            {
+                var appName = Win32Api.User32.GetForegroundAppName();
+                preview = string.IsNullOrEmpty(appName)
+                    ? (SteamStatusManager.GetIdleSignature(config) ?? "空闲中（无签名，好友看不到状态）")
+                    : $"正在使用 {appName.Trim()}";
+            }
+            else
+            {
+                preview = SteamStatusManager.GetIdleSignature(config) ?? "空闲中（无签名，好友看不到状态）";
+            }
+        }
+        if (PreviewText.Text != preview) PreviewText.Text = preview;
     }
 
     private void UpdatePlayerDisplay(int index, PlayerInfo? playerInfo, string playerName, bool isActive,

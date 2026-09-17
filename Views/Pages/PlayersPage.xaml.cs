@@ -66,7 +66,6 @@ public partial class PlayersPage : Page
                     UpdatePlayer(i, playerInfo, isActive, lastError);
                 }
             }
-            UpdateSteamSession();
         }
         catch (Exception ex)
         {
@@ -106,23 +105,6 @@ public partial class PlayersPage : Page
             _albumLabels[index].Text = "--";
             _progressLabels[index].Text = "--";
         }
-    }
-
-    private void UpdateSteamSession()
-    {
-        var session = AppServices.Session;
-        if (session == null)
-        {
-            SConn.Text = "服务未初始化";
-            SLogon.Text = "--";
-            SRealGame.Text = "--";
-            SManualPause.Text = "--";
-            return;
-        }
-        SConn.Text = session.IsConnected ? "已连接" : "未连接";
-        SLogon.Text = session.IsLoggedOn ? $"已登录（{session.Username ?? "未知账号"}）" : "未登录";
-        SRealGame.Text = session.IsRealGameActive ? "检测到，音乐同步暂停" : "无";
-        SManualPause.Text = AppServices.Steam?.ManualPause == true ? "已暂停（托盘菜单可恢复）" : "否";
     }
 
     private void SetForeground(TextBlock label, string brushKey)

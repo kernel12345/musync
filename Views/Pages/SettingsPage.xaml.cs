@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using MuSync.Models;
 using MuSync.Utils;
 using MessageBox = System.Windows.MessageBox;
 namespace MuSync;
@@ -48,7 +47,6 @@ public partial class SettingsPage : Page
             PriorityProgressRadio.IsChecked = true;
         }
         _initialized = true;
-        UpdatePreview();
     }
 
     private void SaveSettings()
@@ -82,60 +80,19 @@ public partial class SettingsPage : Page
         }
     }
 
-    /// <summary>启用空闲签名后，预览切换为签名原文（可直观看到超长截断效果）；取消勾选恢复歌曲预览。</summary>
-    private void UpdatePreview()
-    {
-        if (!_initialized) return;
-        if (EnableCustomSignatureToggle.IsChecked == true)
-        {
-            var signaturePreview = SteamStatusManager.GetIdleSignature(new ConfigData
-            {
-                EnableCustomSignature = true,
-                CustomSignature = CustomSignatureTextBox.Text ?? ""
-            });
-            PreviewText.Text = string.IsNullOrEmpty(signaturePreview)
-                ? "（签名内容为空，请在上方输入）"
-                : signaturePreview;
-            return;
-        }
-        var dummyInfo = new PlayerInfo
-        {
-            Title = "稻香",
-            Artists = "周杰伦",
-            Schedule = 150,
-            Duration = 255,
-            Pause = false,
-            Url = "",
-            Cover = "",
-            Album = "",
-            Identity = ""
-        };
-        PreviewText.Text = SteamStatusManager.GetStatusPreview(dummyInfo, "MuSync", new ConfigData
-        {
-            ShowArtistName = ShowArtistNameToggle.IsChecked == true,
-            ShowProgressBar = ShowProgressBarToggle.IsChecked == true,
-            StatusPriority = PriorityArtistRadio.IsChecked == true
-                ? SteamStatusPriority.Artist
-                : SteamStatusPriority.ProgressBar,
-            EnableCustomPrefix = EnableCustomPrefixToggle.IsChecked == true,
-            CustomPrefix = CustomPrefixTextBox.Text ?? ""
-        });
-    }
-
+    /// <summary>设置改动后联动输入框可用性并保存（实时预览已移至主界面）。</summary>
     private void Setting_Changed(object sender, RoutedEventArgs e)
     {
         if (!_initialized) return;
         // 自定义前缀/签名开关联动输入框可用性
         CustomPrefixTextBox.IsEnabled = EnableCustomPrefixToggle.IsChecked == true;
         CustomSignatureTextBox.IsEnabled = EnableCustomSignatureToggle.IsChecked == true;
-        UpdatePreview();
         SaveSettings();
     }
 
     private void TextBox_Changed(object sender, TextChangedEventArgs e)
     {
         if (!_initialized) return;
-        UpdatePreview();
         SaveSettings();
     }
 

@@ -25,6 +25,22 @@ public partial class MainWindow : FluentWindow
         Icon = WpfImageHelper.ToBitmapSource(AppResource.Icon);
         // Mica 不支持的环境（Win10）下 WindowBackdropType 属性设置会被内部跳过，自动回落主题背景
         SystemThemeWatcher.Watch(this, WindowBackdropType.Mica, updateAccents: true);
+        IsVisibleChanged += Window_IsVisibleChanged;
+    }
+
+    /// <summary>窗口显隐同步给后台轮询，并在隐藏到托盘时回收内存。</summary>
+    private void Window_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        var visible = e.NewValue is true;
+        AppServices.IsMainWindowVisible = visible;
+        if (visible)
+        {
+            MemoryOptimizer.OnWindowShown();
+        }
+        else
+        {
+            MemoryOptimizer.OnWindowHidden();
+        }
     }
 
     /// <summary>标记为显式退出（托盘“退出”/设置页“退出登录”），关闭窗口时不再拦截为最小化到托盘。</summary>

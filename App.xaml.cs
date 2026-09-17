@@ -36,10 +36,24 @@ public partial class App : Application
         if (desktopSettings.DoubleClickHideDesktopIcons)
             DesktopIconService.Start();
         DesktopIconService.SetOpacity(desktopSettings.DesktopIconOpacity);
-        if (!Configurations.Instance.Settings.StartInTray)
-            mainWindow.Show();
-        else
+        // 首次启动强制显示主窗口（即便 StartInTray 已开启），标记一次后后续启动才按设置驻留托盘
+        var firstLaunch = !Configurations.Instance.Settings.HasLaunchedBefore;
+        if (firstLaunch)
+        {
+            Configurations.Instance.Settings.HasLaunchedBefore = true;
+            Configurations.Instance.Save();
+        }
+        if (!firstLaunch && Configurations.Instance.Settings.StartInTray)
+        {
+            // 启动即驻留托盘：窗口从未 Show，IsVisibleChanged 不会触发，需显式置位并启动回收
+            AppServices.IsMainWindowVisible = false;
+            MemoryOptimizer.OnWindowHidden();
             TrayIconService.ShowMinimizeToTrayNotification();
+        }
+        else
+        {
+            mainWindow.Show();
+        }
         // 消息循环空闲后再启动登录流程，避免启动阶段阻塞 UI（最长 15 秒白屏的问题）
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, StartupSteamLogin);
     }

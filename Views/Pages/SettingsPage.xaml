@@ -215,25 +215,6 @@
                     </Grid>
                 </Border>
             </StackPanel>
-
-            <!-- ==================== Steam 状态预览 ==================== -->
-            <TextBlock Text="Steam 状态预览" Style="{StaticResource SettingsSectionHeader}" />
-            <Border Style="{StaticResource SettingsCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="Info24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="好友看到" Style="{StaticResource SettingsCardTitle}" />
-                        <TextBlock x:Name="PreviewText" Margin="0,4,0,0" FontSize="13" FontWeight="SemiBold"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                                   Text="🎵 稻香 - 周杰伦" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-
         </StackPanel>
     </DockPanel>
 </Page>

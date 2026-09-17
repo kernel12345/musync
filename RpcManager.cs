@@ -50,8 +50,9 @@ internal class RpcManager(SteamStatusManager steamManager)
     private const double JumpToleranceSeconds = 0.4;
     private const double DebounceWindowSeconds = 1.5;
     private const double ProgressUpdateIntervalSeconds = 1.0;
-    // 有播放器在跑时高频轮询；空闲时降低频率省电
+    // 有播放器在跑时高频轮询；空闲时降低频率省电；窗口隐藏到托盘后同步降速（Steam 状态仍每秒更新）
     private static readonly TimeSpan ActivePollInterval = TimeSpan.FromMilliseconds(233);
+    private static readonly TimeSpan HiddenActivePollInterval = TimeSpan.FromMilliseconds(1000);
     private static readonly TimeSpan IdlePollInterval = TimeSpan.FromMilliseconds(1200);
     private DateTime _lastProgressUpdateTime = DateTime.MinValue;
     private DateTime _lastTrayStatusUpdateTime = DateTime.MinValue;
@@ -147,12 +148,14 @@ internal class RpcManager(SteamStatusManager steamManager)
         var config = Configurations.Instance.Settings;
         if (!config.PushRealtimeActivity)
         {
+            // 无论此前是否推送过实时操作，空闲/暂停时都要主动落到空闲签名（含未配置签名时清空），
+            // 否则音乐刚暂停时 _realtimePushed=false 会直接 return，签名永远不显示
             if (_realtimePushed)
             {
                 _realtimePushed = false;
                 _lastRealtimeAppName = "";
-                await steamManager.ApplyIdleSignatureAsync();
             }
+            await steamManager.ApplyIdleSignatureAsync();
             return;
         }
         var appName = Win32Api.User32.GetForegroundAppName();
@@ -163,8 +166,8 @@ internal class RpcManager(SteamStatusManager steamManager)
             {
                 _realtimePushed = false;
                 _lastRealtimeAppName = "";
-                await steamManager.ApplyIdleSignatureAsync();
             }
+            await steamManager.ApplyIdleSignatureAsync();
             return;
         }
         if (appName == _lastRealtimeAppName) return;
@@ -353,7 +356,16 @@ internal class RpcManager(SteamStatusManager steamManager)
             }
             finally
             {
-                await Task.Delay(anyPlayerActive ? ActivePollInterval : IdlePollInterval);
+                TimeSpan delay;
+                if (!anyPlayerActive)
+                {
+                    delay = IdlePollInterval;
+                }
+                else
+                {
+                    delay = AppServices.IsMainWindowVisible ? ActivePollInterval : HiddenActivePollInterval;
+                }
+                await Task.Delay(delay);
             }
         }
     }

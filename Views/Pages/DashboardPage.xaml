@@ -140,6 +140,68 @@
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
             </Grid>
 
+            <!-- ============ Steam 状态 ============ -->
+            <TextBlock Text="Steam 状态" Style="{StaticResource SettingsSectionHeader}" />
+
+            <!-- 会话信息（自播放器页迁入） -->
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="Person24" Style="{StaticResource SettingsCardIcon}"
+                                   VerticalAlignment="Top" Margin="0,2,14,0" />
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Steam 会话" Style="{StaticResource SettingsCardTitle}" FontWeight="SemiBold" />
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="72" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="连接" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SConn" Grid.Column="1" FontSize="12" Margin="8,0,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="登录" Grid.Row="1" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SLogon" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="真实游戏" Grid.Row="2" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SRealGame" Grid.Row="2" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                            <TextBlock Text="手动暂停" Grid.Row="3" FontSize="12" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="SManualPause" Grid.Row="3" Grid.Column="1" FontSize="12" Margin="8,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="--" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 好友看到的实时状态（自设置页迁入，改为真实实时预览） -->
+            <Border Style="{StaticResource SettingsCard}" Margin="0,4,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="Info24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Steam 状态预览（好友看到）" Style="{StaticResource SettingsCardTitle}" />
+                        <TextBlock x:Name="PreviewText" Margin="0,4,0,0" FontSize="13" FontWeight="SemiBold"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                   Text="--" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <!-- ============ 性能监控 ============ -->
             <TextBlock Text="性能监控" Style="{StaticResource SettingsSectionHeader}" />
             <Border Style="{StaticResource SettingsCard}">
