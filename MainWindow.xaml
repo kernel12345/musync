@@ -30,6 +30,9 @@
                 <ui:NavigationViewItem Content="挂时长" Icon="{ui:SymbolIcon Games24}"
                                        TargetPageType="{x:Type pages:GameIdlePage}"
                                        NavigationCacheMode="Required" />
+                <ui:NavigationViewItem Content="桌面" Icon="{ui:SymbolIcon Desktop24}"
+                                       TargetPageType="{x:Type pages:DesktopPage}"
+                                       NavigationCacheMode="Required" />
                 <ui:NavigationViewItem Content="设置" Icon="{ui:SymbolIcon Settings24}"
                                        TargetPageType="{x:Type pages:SettingsPage}"
                                        NavigationCacheMode="Required" />

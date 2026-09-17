@@ -29,6 +29,8 @@ internal class ConfigData
     public bool PushRealtimeActivity { get; set; }
     /// <summary>桌面增强：双击桌面空白处隐藏桌面图标（再次双击恢复）。</summary>
     public bool DoubleClickHideDesktopIcons { get; set; }
+    /// <summary>桌面增强：桌面图标不透明度百分比（10-100，100 为系统默认完全不透明）。</summary>
+    public int DesktopIconOpacity { get; set; } = 100;
     /// <summary>挂游戏时长：当前是否处于挂时长状态（登录后自动恢复）。</summary>
     public bool GameIdleEnabled { get; set; }
     /// <summary>挂游戏时长：正在挂的 Steam AppID 列表（最多 30 个，Steam 并发游玩上限）。</summary>

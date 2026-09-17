@@ -1,0 +1,56 @@
+<Page x:Class="MuSync.DesktopPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Background="Transparent">
+    <StackPanel MaxWidth="760" Margin="12,8,12,20">
+
+        <TextBlock Text="桌面" Style="{StaticResource SettingsSectionHeader}" Margin="0,8,0,0" />
+
+        <!-- ============ 双击隐藏图标 ============ -->
+        <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Symbol="Desktop24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="双击桌面隐藏图标" Style="{StaticResource SettingsCardTitle}" />
+                    <TextBlock Text="在桌面空白处双击渐隐隐藏全部图标，再次双击渐显恢复；双击图标正常打开应用，不受影响"
+                               Style="{StaticResource SettingsCardDescription}" />
+                </StackPanel>
+                <ui:ToggleSwitch x:Name="DoubleClickHideToggle" Grid.Column="2" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <!-- ============ 图标透明度 ============ -->
+        <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon Symbol="Opacity24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                    <TextBlock Grid.Column="1" Text="桌面图标透明度" Style="{StaticResource SettingsCardTitle}"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="OpacityValueText" Grid.Column="2" Text="100%" MinWidth="48"
+                               TextAlignment="Right" FontSize="13"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Grid>
+                <Slider x:Name="IconOpacitySlider" Margin="0,14,0,0"
+                        Minimum="20" Maximum="100" Value="100"
+                        SmallChange="1" LargeChange="5" TickFrequency="10"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="IconOpacitySlider_ValueChanged" />
+                <TextBlock Margin="0,8,0,0" FontSize="12"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           Text="拖动滑块实时预览，100% 为系统默认完全不透明；退出 MuSync 后自动恢复默认" />
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</Page>

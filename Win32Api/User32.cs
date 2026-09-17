@@ -189,6 +189,12 @@ internal static partial class User32
     [LibraryImport("user32.dll")]
     internal static partial int GetSystemMetrics(int nIndex);
 
+    [LibraryImport("user32.dll")]
+    internal static partial uint GetDpiForWindow(IntPtr hwnd);
+
+    [LibraryImport("user32.dll")]
+    internal static partial int GetSystemMetricsForDpi(int nIndex, uint dpi);
+
     [LibraryImport("user32.dll", EntryPoint = "GetMessageW")]
     internal static partial int GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 

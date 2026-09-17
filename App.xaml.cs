@@ -32,8 +32,10 @@ public partial class App : Application
         var mainWindow = new MainWindow();
         MainWindow = mainWindow;
         TrayIconService.Initialize(mainWindow);
-        if (Configurations.Instance.Settings.DoubleClickHideDesktopIcons)
+        var desktopSettings = Configurations.Instance.Settings;
+        if (desktopSettings.DoubleClickHideDesktopIcons)
             DesktopIconService.Start();
+        DesktopIconService.SetOpacity(desktopSettings.DesktopIconOpacity);
         if (!Configurations.Instance.Settings.StartInTray)
             mainWindow.Show();
         else

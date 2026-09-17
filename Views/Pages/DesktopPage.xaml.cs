@@ -1,0 +1,51 @@
+using System.Windows;
+using System.Windows.Controls;
+
+namespace MuSync;
+
+/// <summary>桌面增强页：双击空白隐藏图标开关、桌面图标常驻透明度调节。</summary>
+public partial class DesktopPage : Page
+{
+    private bool _initialized;
+
+    public DesktopPage()
+    {
+        InitializeComponent();
+        Loaded += (_, _) => LoadSettings();
+    }
+
+    private void LoadSettings()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        var settings = Configurations.Instance.Settings;
+        DoubleClickHideToggle.IsChecked = settings.DoubleClickHideDesktopIcons;
+        IconOpacitySlider.Value = settings.DesktopIconOpacity is >= 20 and <= 100
+            ? settings.DesktopIconOpacity
+            : 100;
+        // 开关状态变化即时启停钩子
+        DoubleClickHideToggle.Checked += (_, _) => SaveDoubleClickSetting(true);
+        DoubleClickHideToggle.Unchecked += (_, _) => SaveDoubleClickSetting(false);
+    }
+
+    private void SaveDoubleClickSetting(bool enabled)
+    {
+        if (!_initialized) return;
+        var settings = Configurations.Instance.Settings;
+        settings.DoubleClickHideDesktopIcons = enabled;
+        Configurations.Instance.Save();
+        if (enabled) DesktopIconService.Start();
+        else DesktopIconService.StopHook();
+    }
+
+    private void IconOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || OpacityValueText == null) return;
+        var percent = (int)IconOpacitySlider.Value;
+        OpacityValueText.Text = $"{percent}%";
+        var settings = Configurations.Instance.Settings;
+        settings.DesktopIconOpacity = percent;
+        Configurations.Instance.Save();
+        DesktopIconService.SetOpacity(percent);
+    }
+}
