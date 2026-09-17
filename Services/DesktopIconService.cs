@@ -11,9 +11,9 @@ namespace MuSync;
 /// 桌面增强效果：
 /// 1) 双击桌面空白处渐隐隐藏/渐显恢复桌面图标（参照 DeskHider / iPhilip 的 AHK 方案）；
 /// 2) 桌面图标常驻不透明度调节（WS_EX_LAYERED + SetLayeredWindowAttributes）。
-/// 专用后台线程安装低级鼠标钩子（WH_MOUSE_LL）并泵消息，按系统双击时间/区域识别两次左键按下；
-/// 取鼠标下窗口的顶层窗口类名判定是否位于桌面（Progman/WorkerW）：
-/// 图标可见时，跨进程枚举每个图标的包围矩形（LVM_GETITEMRECT + VirtualAllocEx/ReadProcessMemory），
+/// 专用后台线程安装低级鼠标钩子（WH_MOUSE_LL），但回调里只做轻量双击判定并 PostMessage 到本线程的
+/// 仅消息窗口——昂贵的桌面命中检测（几十次跨进程消息）全部在消息处理中完成，保证回调在
+/// LowLevelHooksTimeout 内返回（超时会被 Windows 静默吊销钩子，导致功能永久失效）。
 /// 仅当“确认”鼠标不在任何图标矩形内（空白处）才隐藏——任何枚举失败都按“点在图标上”处理，
 /// 宁可漏隐藏也绝不在用户双击图标打开应用时误触发渐隐；图标已隐藏时双击桌面任意位置直接恢复。
 /// </summary>
@@ -27,6 +27,8 @@ internal static partial class DesktopIconService
     private const int FadeSteps = 30;
     private const int FadeStepMs = 12; // 30 步 × 12ms ≈ 400ms 渐变时长
     private const int IconRectPadding = 8; // 图标命中矩形外扩物理像素，避免点在图标边缘误判为空白
+    private static readonly IntPtr HwndMessage = new(-3);
+    private const uint WmToggle = 0x0400; // WM_USER：钩子回调通知本线程执行桌面切换
     private const uint WmLButtonDown = 0x0201;
     private const uint WmQuit = 0x0012;
     private const uint LvmGetItemCount = 0x1004; // LVM_FIRST + 4（无指针参数，跨进程安全）
@@ -45,12 +47,17 @@ internal static partial class DesktopIconService
 
     private static Thread? _thread;
     private static IntPtr _hook;
-    private static MouseHookProc? _hookProc; // 持有钩子委托引用，防止被 GC 回收
+    private static IntPtr _msgWnd;
+    private static MouseHookProc? _hookProc;   // 持有钩子委托引用，防止被 GC 回收
+    private static WndProc? _wndProc;         // 持有窗口过程委托引用，防止被 GC 回收
     private static uint _hookThreadId;
     private static long _lastDownTick;
     private static int _lastDownX;
     private static int _lastDownY;
     private static int _opacityPercent = 100;
+    private static IntPtr _cachedList = IntPtr.Zero; // 桌面图标列表缓存句柄（explorer 重启后自动失效重建）
+    private static int _opacityVersion;               // 透明度设置版本号，用于合并拖动滑块时的高频请求
+    private static int _opacityApplyScheduled;        // 0/1：是否已有一个应用任务在途
     private static readonly SemaphoreSlim FadeLock = new(1, 1); // 串行化透明度变更与淡入淡出，避免动画交叠
 
     /// <summary>当前配置的图标不透明度（10-100）。</summary>
@@ -68,32 +75,6 @@ internal static partial class DesktopIconService
         _thread.Start();
     }
 
-    /// <summary>
-    /// 设置桌面图标常驻不透明度（10-100，100 为系统默认），立即生效。
-    /// 与渐隐动画共用 FadeLock 串行；动画结束后的图标也停留在该透明度。
-    /// </summary>
-    public static void SetOpacity(int percent)
-    {
-        _opacityPercent = Math.Clamp(percent, 10, 100);
-        var target = TargetAlpha;
-        _ = Task.Run(() =>
-        {
-            if (!FadeLock.Wait(800)) return;
-            try
-            {
-                ApplyOpacity(target);
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn($"设置桌面图标透明度失败: {ex.Message}");
-            }
-            finally
-            {
-                FadeLock.Release();
-            }
-        });
-    }
-
     /// <summary>仅停止双击隐藏钩子（关闭该开关时调用），保留常驻透明度效果；幂等。</summary>
     public static void StopHook()
     {
@@ -104,6 +85,59 @@ internal static partial class DesktopIconService
         var threadId = _hookThreadId;
         _hookThreadId = 0;
         if (threadId != 0) PostThreadMessage(threadId, WmQuit, IntPtr.Zero, IntPtr.Zero);
+    }
+
+    /// <summary>
+    /// 设置桌面图标常驻不透明度（10-100，100 为系统默认），立即生效。
+    /// 高频调用（拖动滑块）会被合并：只保留最新值，由单个后台任务以约 60fps 应用，
+    /// 不做窗口枚举风暴，也不在 UI 线程落盘（落盘由调用方防抖处理）。
+    /// </summary>
+    public static void SetOpacity(int percent)
+    {
+        _opacityPercent = Math.Clamp(percent, 10, 100);
+        Interlocked.Increment(ref _opacityVersion);
+        if (Interlocked.CompareExchange(ref _opacityApplyScheduled, 1, 0) != 0) return;
+        _ = Task.Run(ApplyOpacityLoopAsync);
+    }
+
+    private static async Task ApplyOpacityLoopAsync()
+    {
+        var appliedVersion = -1;
+        try
+        {
+            while (true)
+            {
+                await Task.Delay(16); // 约 60fps 合并拖动期间的高频更新
+                var latestVersion = Volatile.Read(ref _opacityVersion);
+                if (appliedVersion == latestVersion) break;
+                // 淡入淡出进行中则跳过本轮（下一轮再试），绝不让滑块与动画互相打架
+                if (!FadeLock.Wait(0)) continue;
+                try
+                {
+                    ApplyOpacity(TargetAlpha);
+                    appliedVersion = latestVersion;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"设置桌面图标透明度失败: {ex.Message}");
+                    appliedVersion = latestVersion; // 出错也退出循环，避免刷屏
+                }
+                finally
+                {
+                    FadeLock.Release();
+                }
+            }
+        }
+        finally
+        {
+            Volatile.Write(ref _opacityApplyScheduled, 0);
+            // 退出瞬间又有新设置进来时补一次调度
+            if (Volatile.Read(ref _opacityVersion) != appliedVersion &&
+                Interlocked.CompareExchange(ref _opacityApplyScheduled, 1, 0) == 0)
+            {
+                _ = Task.Run(ApplyOpacityLoopAsync);
+            }
+        }
     }
 
     /// <summary>程序退出时调用：停钩子并把桌面图标完全恢复（显示、不透明、去分层样式），幂等。</summary>
@@ -121,6 +155,7 @@ internal static partial class DesktopIconService
             // 移除我们加上的分层样式，把窗口还给 explorer 的原始状态
             var exStyle = GetWindowLongPtr(list, GwlExStyle).ToInt64();
             SetWindowLongPtr(list, GwlExStyle, (IntPtr)(exStyle & ~WsExLayered));
+            _cachedList = IntPtr.Zero;
         }
         catch (Exception ex)
         {
@@ -136,6 +171,28 @@ internal static partial class DesktopIconService
     {
         try
         {
+            // 1) 创建仅消息窗口：钩子回调只 PostMessage，昂贵处理在本线程消息循环中完成
+            _wndProc = MessageWndProc;
+            var classNamePtr = Marshal.StringToHGlobalUni("MuSyncDesktopMsgWnd");
+            try
+            {
+                var wc = new WndClassEx
+                {
+                    CbSize = (uint)Marshal.SizeOf<WndClassEx>(),
+                    LpfnWndProc = Marshal.GetFunctionPointerForDelegate(_wndProc),
+                    HInstance = GetModuleHandle(null),
+                    LpszClassName = classNamePtr
+                };
+                RegisterClassEx(ref wc); // 重复注册（线程重启）返回 0，类仍可用，忽略
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(classNamePtr);
+            }
+            _msgWnd = CreateWindowExEx(0, "MuSyncDesktopMsgWnd", null, 0, 0, 0, 0, 0,
+                HwndMessage, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
+
+            // 2) 安装低级鼠标钩子
             _hookProc = HookProc;
             _hookThreadId = GetCurrentThreadId();
             _hook = SetWindowsHookEx(WhMouseLl, _hookProc, GetModuleHandle(null), 0);
@@ -158,22 +215,47 @@ internal static partial class DesktopIconService
             var hook = _hook;
             _hook = IntPtr.Zero;
             if (hook != IntPtr.Zero) UnhookWindowsHookEx(hook);
+            if (_msgWnd != IntPtr.Zero)
+            {
+                DestroyWindow(_msgWnd);
+                _msgWnd = IntPtr.Zero;
+            }
         }
+    }
+
+    private static IntPtr MessageWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        if (msg == WmToggle)
+        {
+            try
+            {
+                ToggleIfDesktopEmptyArea(new POINT { X = wParam.ToInt32(), Y = lParam.ToInt32() });
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"桌面双击处理异常: {ex.Message}");
+            }
+            return IntPtr.Zero;
+        }
+        return DefWindowProc(hWnd, msg, wParam, lParam);
     }
 
     private static IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam)
     {
+        // 回调必须极快返回（LowLevelHooksTimeout 约 300ms，超时钩子会被系统静默吊销）：
+        // 这里只做纯本地双击判定，命中检测/跨进程枚举全部交给消息窗口处理
         try
         {
             if (nCode >= 0 && wParam.ToInt64() == WmLButtonDown)
             {
                 var info = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
-                if (IsDoubleClick(info.pt)) ToggleIfDesktopEmptyArea(info.pt);
+                if (IsDoubleClick(info.pt) && _msgWnd != IntPtr.Zero)
+                    PostMessage(_msgWnd, WmToggle, (IntPtr)info.pt.X, (IntPtr)info.pt.Y);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Logger.Warn($"桌面双击处理异常: {ex.Message}");
+            // 钩子回调内绝不能抛异常
         }
         return CallNextHookEx(_hook, nCode, wParam, lParam);
     }
@@ -225,7 +307,7 @@ internal static partial class DesktopIconService
         var rootClass = GetClassName(GetAncestor(hwnd, GaRoot));
         if (rootClass is not ("Progman" or "WorkerW")) return;
 
-        var list = FindIconListView();
+        var list = GetIconList();
         if (list == IntPtr.Zero) return;
 
         if (!IsWindowVisible(list))
@@ -243,10 +325,30 @@ internal static partial class DesktopIconService
         Logger.Info("双击桌面空白处：隐藏桌面图标");
     }
 
+    /// <summary>取桌面图标列表句柄（带缓存）；缓存失效（explorer 重启）时重新枚举并恢复透明度。</summary>
+    private static IntPtr GetIconList()
+    {
+        var cached = _cachedList;
+        if (cached != IntPtr.Zero && IsWindow(cached) &&
+            GetClassName(cached) == "SysListView32")
+        {
+            return cached;
+        }
+        var found = FindIconListView();
+        _cachedList = found;
+        if (found != IntPtr.Zero)
+        {
+            // explorer 重启后新窗口不是分层窗口，按当前配置重新应用常驻透明度
+            try { ApplyOpacity(TargetAlpha); }
+            catch (Exception ex) { Logger.Warn($"explorer 重启后恢复图标透明度失败: {ex.Message}"); }
+        }
+        return found;
+    }
+
     /// <summary>
     /// 淡出/淡入切换图标列表显隐。AnimateWindow 对跨进程子窗口不生效，
     /// 改用 WS_EX_LAYERED + SetLayeredWindowAttributes 手动渐变 Alpha；
-    /// 动画放线程池执行，不阻塞鼠标钩子线程，FadeLock 保证多个效果串行。
+    /// 动画放线程池执行，FadeLock 保证多个效果串行。
     /// 动画结束停留在当前配置的不透明度；分层样式保留（退出时由 Stop 统一移除）。
     /// </summary>
     private static void FadeWindow(IntPtr listHwnd, bool show)
@@ -301,7 +403,7 @@ internal static partial class DesktopIconService
     /// <summary>给桌面列表加分层样式（已存在则不动）并设置目标 Alpha。</summary>
     private static void ApplyOpacity(byte alpha)
     {
-        var list = FindIconListView();
+        var list = GetIconList();
         if (list == IntPtr.Zero) return;
         var exStyle = GetWindowLongPtr(list, GwlExStyle).ToInt64();
         var alreadyLayered = (exStyle & WsExLayered) != 0;

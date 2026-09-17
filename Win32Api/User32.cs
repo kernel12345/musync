@@ -202,6 +202,51 @@ internal static partial class User32
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool PostThreadMessage(uint threadId, uint msg, IntPtr wParam, IntPtr lParam);
 
+    // -------- 仅接收消息的隐藏窗口（把重活移出低级钩子回调） --------
+    internal delegate IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WndClassEx
+    {
+        public uint CbSize;
+        public uint Style;
+        public IntPtr LpfnWndProc;
+        public int CbClsExtra;
+        public int CbWndExtra;
+        public IntPtr HInstance;
+        public IntPtr HIcon;
+        public IntPtr HCursor;
+        public IntPtr HbrBackground;
+        public IntPtr LpszMenuName;
+        public IntPtr LpszClassName;
+        public IntPtr HIconSm;
+    }
+
+    [LibraryImport("user32.dll", EntryPoint = "RegisterClassExW", SetLastError = true,
+        StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial ushort RegisterClassEx(ref WndClassEx lpwcx);
+
+    [LibraryImport("user32.dll", EntryPoint = "CreateWindowExW", SetLastError = true,
+        StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial IntPtr CreateWindowExEx(uint dwExStyle, string? lpClassName, string? lpWindowName,
+        uint dwStyle, int x, int y, int nWidth, int nHeight, IntPtr hWndParent,
+        IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsWindow(IntPtr hWnd);
+
+    [LibraryImport("user32.dll")]
+    internal static partial IntPtr DefWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool DestroyWindow(IntPtr hWnd);
+
+    [LibraryImport("user32.dll", EntryPoint = "PostMessageW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
     // kernel32
     [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
     internal static partial IntPtr GetModuleHandle(string? lpModuleName);

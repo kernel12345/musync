@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace MuSync;
 
@@ -7,11 +8,13 @@ namespace MuSync;
 public partial class DesktopPage : Page
 {
     private bool _initialized;
+    private DispatcherTimer? _saveDebounce;
 
     public DesktopPage()
     {
         InitializeComponent();
         Loaded += (_, _) => LoadSettings();
+        Unloaded += (_, _) => FlushPendingSave(); // 切走页面前确保滑块值已落盘
     }
 
     private void LoadSettings()
@@ -43,9 +46,27 @@ public partial class DesktopPage : Page
         if (!_initialized || OpacityValueText == null) return;
         var percent = (int)IconOpacitySlider.Value;
         OpacityValueText.Text = $"{percent}%";
-        var settings = Configurations.Instance.Settings;
-        settings.DesktopIconOpacity = percent;
-        Configurations.Instance.Save();
+        // 拖动期间只更新内存与实时效果，绝不逐帧写磁盘；停止操作 400ms 后才落盘一次
+        Configurations.Instance.Settings.DesktopIconOpacity = percent;
         DesktopIconService.SetOpacity(percent);
+        _saveDebounce ??= new DispatcherTimer(DispatcherPriority.Background) { Interval = System.TimeSpan.FromMilliseconds(400) };
+        _saveDebounce.Stop();
+        _saveDebounce.Tick -= SaveDebounce_Tick;
+        _saveDebounce.Tick += SaveDebounce_Tick;
+        _saveDebounce.Start();
+    }
+
+    private void SaveDebounce_Tick(object? sender, System.EventArgs e)
+    {
+        FlushPendingSave();
+    }
+
+    private void FlushPendingSave()
+    {
+        if (_saveDebounce?.IsEnabled == true)
+        {
+            _saveDebounce.Stop();
+            Configurations.Instance.Save();
+        }
     }
 }

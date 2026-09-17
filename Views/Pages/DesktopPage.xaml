@@ -43,8 +43,7 @@
                 </Grid>
                 <Slider x:Name="IconOpacitySlider" Margin="0,14,0,0"
                         Minimum="20" Maximum="100" Value="100"
-                        SmallChange="1" LargeChange="5" TickFrequency="10"
-                        IsSnapToTickEnabled="True"
+                        SmallChange="1" LargeChange="5"
                         ValueChanged="IconOpacitySlider_ValueChanged" />
                 <TextBlock Margin="0,8,0,0" FontSize="12"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
