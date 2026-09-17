@@ -34,7 +34,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="Opacity24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
+                    <ui:SymbolIcon Symbol="ColorBackground24" Style="{StaticResource SettingsCardIcon}" Margin="0,0,14,0" />
                     <TextBlock Grid.Column="1" Text="桌面图标透明度" Style="{StaticResource SettingsCardTitle}"
                                VerticalAlignment="Center" />
                     <TextBlock x:Name="OpacityValueText" Grid.Column="2" Text="100%" MinWidth="48"

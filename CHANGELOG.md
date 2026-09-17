@@ -3,6 +3,14 @@
 本项目的版本变更记录。格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.2.5] - 2026-09-17
+
+### 修复
+
+- 修复点击侧边栏「桌面」页**卡死并闪退**的问题：透明度卡片图标误用了 WPF-UI 4.3.0 中不存在的
+  `SymbolRegular.Opacity24`（XAML 枚举名在编译期不校验，运行时加载页面才抛出 `XamlParseException`），
+  改为有效的 `ColorBackground24`。
+
 ## [0.2.4] - 2026-09-17
 
 ### 新增
